@@ -69,7 +69,7 @@ class Omega(object):
     async def check_running_conditions(self, ft):
         dt1 = datetime.time(3, 0, 0)
         dt2 = datetime.time(8, 0, 0)
-        dt3 = datetime.time(10, 10, 0)
+        dt3 = datetime.time(17, 10, 0)
 
         now = datetime.datetime.now()
         nowtime = now.time()
