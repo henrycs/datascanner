@@ -15,7 +15,6 @@ from omicron.models.timeframe import TimeFrame
 
 from fetchers.quotes_fetcher import QuotesFetcher
 
-
 logger = logging.getLogger(__file__)
 
 cfg = cfg4py.get_instance()

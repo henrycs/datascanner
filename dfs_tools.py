@@ -2,10 +2,12 @@ import datetime
 import logging
 import pickle
 from typing import AnyStr, Dict, List, Union
+
 import cfg4py
-from coretypes import FrameType, SecurityType
 import numpy as np
+from coretypes import FrameType, SecurityType
 from omicron.models.timeframe import TimeFrame
+
 from dfs import Storage
 
 logger = logging.getLogger(__name__)
@@ -58,12 +60,12 @@ async def write_bars_dfs(
     dt: datetime.date,
     frame_type: List[FrameType],
     bars: Union[Dict[str, np.ndarray], np.ndarray],
-    prefix: SecurityType
+    prefix: SecurityType,
 ):
     dfs = Storage()
     if dfs is None:
         return False
-    
+
     cfg = cfg4py.get_instance()
     binary = pickle.dumps(bars, protocol=cfg.pickle.ver)
 
@@ -80,12 +82,12 @@ async def write_bars_dfs(
 async def write_price_limits_dfs(
     dt: datetime.date,
     bars: Union[Dict[str, np.ndarray], np.ndarray],
-    prefix: SecurityType
+    prefix: SecurityType,
 ):
     dfs = Storage()
     if dfs is None:
         return False
-    
+
     cfg = cfg4py.get_instance()
     binary = pickle.dumps(bars, protocol=cfg.pickle.ver)
 

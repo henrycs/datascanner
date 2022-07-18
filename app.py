@@ -1,21 +1,21 @@
 import asyncio
 import datetime
 import logging
-from logging.handlers import TimedRotatingFileHandler
 import os
-from os import path
 import sys
 import time
+from logging.handlers import TimedRotatingFileHandler
+from os import path
 from typing import List
-import arrow
 
+import arrow
 import cfg4py
-from coretypes import FrameType
 import omicron
+from coretypes import FrameType
 from omicron.dal.cache import cache
+
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 from main import get_cache_keyname, scanner_main
-
 
 logger = logging.getLogger(__name__)
 
@@ -71,12 +71,12 @@ class Omega(object):
         dt2 = datetime.time(8, 0, 0)
         dt3 = datetime.time(10, 10, 0)
 
-        now = datetime.datetime.now()    
-        nowtime = now.time()    
+        now = datetime.datetime.now()
+        nowtime = now.time()
 
         if nowtime < dt1:  # 3点前有其他任务
             return False
-        if nowtime > dt2 and nowtime < dt3:  #交易时间段不执行
+        if nowtime > dt2 and nowtime < dt3:  # 交易时间段不执行
             return False
 
         key = get_cache_keyname(ft)
@@ -97,7 +97,7 @@ class Omega(object):
         try:
             await omicron.init()
         except Exception as e:
-            logger.error('No calendar and securities in cache')
+            logger.error("No calendar and securities in cache, %s", e)
             time.sleep(5)
             os._exit(1)
 
@@ -106,7 +106,7 @@ class Omega(object):
         ft = FrameType.MIN60
         rc = await self.check_running_conditions(ft)
         if rc:
-            #await AbstractQuotesFetcher.create_instance(self.fetcher_impl, **self.params)
+            # await AbstractQuotesFetcher.create_instance(self.fetcher_impl, **self.params)
             await scanner_main(ft)
 
         await omicron.close()
@@ -135,7 +135,7 @@ def start():
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(omega.init())
-    #loop.run_forever()
+    # loop.run_forever()
 
 
 if __name__ == "__main__":

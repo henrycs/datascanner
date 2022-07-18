@@ -1,23 +1,28 @@
 import datetime
 import logging
-from coretypes import FrameType, bars_dtype
+
 import cfg4py
-from omicron.models.timeframe import TimeFrame
-from omicron.models.security import Security
-from omicron.models.stock import Stock
+from coretypes import FrameType, bars_dtype
 from omicron.dal.influx.flux import Flux
 from omicron.dal.influx.influxclient import InfluxClient
 from omicron.dal.influx.serialize import EPOCH, DataframeDeserializer
+from omicron.models.security import Security
+from omicron.models.stock import Stock
+from omicron.models.timeframe import TimeFrame
 from omicron.models.timeframe import TimeFrame as tf
-from influx_data.security_bars_1d import get_security_day_bars, get_security_price_limits
 
+from influx_data.security_bars_1d import (
+    get_security_day_bars,
+    get_security_price_limits,
+)
 from jq_fetcher import get_sec_bars_1d, get_sec_bars_1d_pricelimits
-
 
 logger = logging.getLogger(__name__)
 
 
-async def fullscan_1d_for_close_price(all_secs_today, target_date: datetime.date, all_secs_data):
+async def fullscan_1d_for_close_price(
+    all_secs_today, target_date: datetime.date, all_secs_data
+):
     start = datetime.datetime.combine(target_date, datetime.time(0, 0, 0))
     end = datetime.datetime.combine(target_date, datetime.time(23, 59, 59))
     all_secs_in_bars = await get_security_day_bars(start, end)
@@ -48,21 +53,24 @@ async def fullscan_1d_for_close_price(all_secs_today, target_date: datetime.date
         if sec not in secs_in_jq:
             secs_to_be_added_2.add(sec)  # 可能是停牌
             print("--------------- not in jq, ", sec)
-    print("total secs to be added into bars:1d, ", len(secs_to_be_added), len(secs_to_be_added_2))
+    print(
+        "total secs to be added into bars:1d, ",
+        len(secs_to_be_added),
+        len(secs_to_be_added_2),
+    )
 
     print("-------------------------------------------------")
     for sec in secs_in_bars:
-        if sec not in secs_in_jq:            
+        if sec not in secs_in_jq:
             print("----- remove from bars:1d, ", sec)
     for sec in secs_in_jq:
-        if sec not in secs_in_bars:            
+        if sec not in secs_in_bars:
             print("----- update from bars:1d, ", sec)
-
 
     # download data from jq
     if len(secs_to_be_added) > 0:
         pass
-        #await get_sec_bars_1d(secs_to_be_added, target_date)
+        # await get_sec_bars_1d(secs_to_be_added, target_date)
 
     print("finished checking bars:1d:open, ", target_date)
 

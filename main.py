@@ -1,31 +1,35 @@
 import datetime
 import logging
 import os
+
 import arrow
 from coretypes import FrameType
-from omicron.models.timeframe import TimeFrame
 from omicron.dal.cache import cache
-from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
-from influx_tools import drop_bars_1M, drop_bars_1d,  drop_bars_1w, drop_bars_via_scope
+from omicron.models.timeframe import TimeFrame
 
+from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 from influx_data.security_list import get_security_list
+from influx_tools import drop_bars_1d, drop_bars_1M, drop_bars_1w, drop_bars_via_scope
 from rapidscan.fix_days import scan_bars_1d_for_seclist
 from rapidscan.fix_minutes import validate_bars_min
 from rapidscan.get_days import retrieve_bars_1d
-from time_utils import check_running_conditions, get_cache_keyname, get_latest_day_str, split_securities
-
+from time_utils import (
+    check_running_conditions,
+    get_cache_keyname,
+    get_latest_day_str,
+    split_securities,
+)
 
 logger = logging.getLogger(__name__)
 
 
 async def scanner_handler_minutes(ft: FrameType):
     if ft not in (FrameType.MIN1, FrameType.MIN5, FrameType.MIN30, FrameType.MIN60):
-        raise TypeError(f"FrameType not supported!")
+        raise TypeError("FrameType not supported!")
 
-    epoch_start_day = datetime.date(2005, 1, 4)
-    #instance = AbstractQuotesFetcher.get_instance()
+    # instance = AbstractQuotesFetcher.get_instance()
     instance = None
-    
+
     key = get_cache_keyname(ft)
     start_str = await cache.sys.get(key)
     if start_str is None:
@@ -33,14 +37,19 @@ async def scanner_handler_minutes(ft: FrameType):
     else:
         target_day = arrow.get(start_str).date()
 
-    while(True):
+    while True:
         _latest_day = await get_latest_day_str()
         if _latest_day is None:
             logger.error("no datascan:cursor:1d found!!!")
             return False
 
         if target_day <= _latest_day:
-            logger.info("finish running for bars:%s, %s (latest day %s)", ft.value, target_day, _latest_day)
+            logger.info(
+                "finish running for bars:%s, %s (latest day %s)",
+                ft.value,
+                target_day,
+                _latest_day,
+            )
             break
 
         rc = await check_running_conditions(instance)
@@ -66,7 +75,7 @@ async def scanner_handler_minutes(ft: FrameType):
         # save timestamp
         await cache.sys.set(key, target_day.strftime("%Y-%m-%d"))
         input("next day...")
-        
+
         if os.path.exists("/home/henry/zillionare/omega_scanner_min/break1m.txt"):
             logger.info("break flag detected, exit, last day: %s", target_day)
             break
@@ -76,18 +85,16 @@ async def scanner_handler_minutes(ft: FrameType):
 
 async def scanner_main(ft: FrameType):
     try:
-        #await drop_bars_1d()
-        #await drop_bars_1w()
-        #await drop_bars_1M()
-        #await drop_bars_via_scope(target_year, FrameType.WEEK)
-        #return True
+        # await drop_bars_1d()
+        # await drop_bars_1w()
+        # await drop_bars_1M()
+        # await drop_bars_via_scope(target_year, FrameType.WEEK)
+        # return True
 
         await scanner_handler_minutes(ft)
 
     except Exception as e:
         logger.info("failed to execution: %s", e)
         return False
-    
-    logger.info("all tasks finished.")
 
-    
+    logger.info("all tasks finished.")

@@ -11,7 +11,6 @@ import numpy as np
 from minio import Minio
 from retrying import retry
 
-
 cfg = cfg4py.get_instance()
 
 logger = logging.getLogger(__name__)

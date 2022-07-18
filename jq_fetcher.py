@@ -4,6 +4,7 @@ from typing import List
 
 import numpy as np
 from coretypes import FrameType
+
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 
 logger = logging.getLogger(__name__)
@@ -41,28 +42,37 @@ async def get_sec_bars_min(secs_set: set, dt: datetime.date, ft: FrameType):
             end = start + left
             left = 0
 
-        _sec_list = secs[start : end]
-        bars = await instance.get_bars_batch(_sec_list, end_dt, n_bars, ft.value, include_unclosed=True)
+        _sec_list = secs[start:end]
+        bars = await instance.get_bars_batch(
+            _sec_list, end_dt, n_bars, ft.value, include_unclosed=True
+        )
         for code in list(bars.keys()):
             if not len(bars[code]):
                 del bars[code]
                 print("delete empty bar: ", code)
                 continue
-            if np.any(np.isnan(bars[code]["amount"])) or np.any(np.isnan(bars[code]["volume"])):
+            if np.any(np.isnan(bars[code]["amount"])) or np.any(
+                np.isnan(bars[code]["volume"])
+            ):
                 del bars[code]
                 print("delete bar with nan amount/volume: ", code)
                 continue
             _date_in_bar = bars[code]["frame"][0]
             if _date_in_bar.date() != dt:
                 del bars[code]
-                logger.info("delete bar with earlier date (bars:%s): %s, %s", ft.value, code, _date_in_bar)
+                logger.info(
+                    "delete bar with earlier date (bars:%s): %s, %s",
+                    ft.value,
+                    code,
+                    _date_in_bar,
+                )
                 continue
-            
-            #print("sec added: ", code)
+
+            # print("sec added: ", code)
             all_valid_bars[code] = bars[code]
 
         start = end
-    
+
     return all_valid_bars
 
 
@@ -83,34 +93,39 @@ async def get_sec_bars_1d(secs_set: set, dt: datetime.date):
             end = start + left
             left = 0
 
-        _sec_list = secs[start : end]
-        bars = await instance.get_bars_batch(_sec_list, end_dt, 1, "1d", include_unclosed=True)
+        _sec_list = secs[start:end]
+        bars = await instance.get_bars_batch(
+            _sec_list, end_dt, 1, "1d", include_unclosed=True
+        )
         for code in list(bars.keys()):
             if not len(bars[code]):
                 del bars[code]
                 print("delete empty bar: ", code)
                 continue
-            if np.any(np.isnan(bars[code]["amount"])) or np.any(np.isnan(bars[code]["volume"])):
+            if np.any(np.isnan(bars[code]["amount"])) or np.any(
+                np.isnan(bars[code]["volume"])
+            ):
                 del bars[code]
                 print("delete bar with nan amount/volume: ", code)
                 continue
             _date_in_bar = bars[code]["frame"][0]
             if _date_in_bar != dt:
                 del bars[code]
-                logger.info("delete bar with earlier date (bars:1d): %s, %s", code, _date_in_bar)
+                logger.info(
+                    "delete bar with earlier date (bars:1d): %s, %s", code, _date_in_bar
+                )
                 continue
-            
-            #print("sec added: ", code)
+
+            # print("sec added: ", code)
             all_valid_bars[code] = bars[code]
 
         start = end
-    
+
     return all_valid_bars
 
 
 async def get_sec_bars_pricelimits(secs_set: set, dt: datetime.date):
     secs = list(secs_set)
-    all_valid_bars = []
 
     instance = AbstractQuotesFetcher.get_instance()
 
@@ -121,11 +136,6 @@ async def get_sec_bars_pricelimits(secs_set: set, dt: datetime.date):
     bars = bars[~np.isnan(bars["high_limit"])]
     bars = bars[bars["frame"] == dt]
 
-    for info in bars:
-        code = info[1]
-        if info[0] != dt:
-            logger.info("no data in target date (price limits), %s, %s", code, info)
-    
     return bars
 
 
@@ -146,9 +156,9 @@ async def get_sec_bars_pricelimits_list(secs_set: set, dt: datetime.date):
         if info[0] != dt:
             logger.info("no data in target date (price limits), %s, %s", code, info)
         else:
-            #print("sec added: ", code)
+            # print("sec added: ", code)
             all_valid_bars.append(info)
-    
+
     return all_valid_bars
 
 
@@ -169,30 +179,37 @@ async def get_sec_bars_1w(secs_set: set, dt: datetime.date, d0: datetime.date):
             end = start + left
             left = 0
 
-        _sec_list = secs[start : end]
-        bars = await instance.get_bars_batch(_sec_list, end_dt, 1, "1w", include_unclosed=True)
+        _sec_list = secs[start:end]
+        bars = await instance.get_bars_batch(
+            _sec_list, end_dt, 1, "1w", include_unclosed=True
+        )
         for code in list(bars.keys()):
             if not len(bars[code]):
                 del bars[code]
                 print("delete empty bar: ", code)
                 continue
-            if np.any(np.isnan(bars[code]["amount"])) or np.any(np.isnan(bars[code]["volume"])):
+            if np.any(np.isnan(bars[code]["amount"])) or np.any(
+                np.isnan(bars[code]["volume"])
+            ):
                 del bars[code]
                 print("delete bar with nan amount/volume: ", code)
                 continue
             _date_in_bar = bars[code]["frame"][0]
             if _date_in_bar < d0 or _date_in_bar > dt:
                 del bars[code]
-                logger.info("delete bar with invalid date (not in this week): %s, %s", code, _date_in_bar)
+                logger.info(
+                    "delete bar with invalid date (not in this week): %s, %s",
+                    code,
+                    _date_in_bar,
+                )
                 continue
-            
-            #print("sec added: ", code)
+
+            # print("sec added: ", code)
             all_valid_bars[code] = bars[code]
 
         start = end
-    
-    return all_valid_bars
 
+    return all_valid_bars
 
 
 async def get_sec_bars_1M(secs_set: set, dt: datetime.date, d0: datetime.date):
@@ -212,26 +229,34 @@ async def get_sec_bars_1M(secs_set: set, dt: datetime.date, d0: datetime.date):
             end = start + left
             left = 0
 
-        _sec_list = secs[start : end]
-        bars = await instance.get_bars_batch(_sec_list, end_dt, 1, "1M", include_unclosed=True)
+        _sec_list = secs[start:end]
+        bars = await instance.get_bars_batch(
+            _sec_list, end_dt, 1, "1M", include_unclosed=True
+        )
         for code in list(bars.keys()):
             if not len(bars[code]):
                 del bars[code]
                 print("delete empty bar: ", code)
                 continue
-            if np.any(np.isnan(bars[code]["amount"])) or np.any(np.isnan(bars[code]["volume"])):
+            if np.any(np.isnan(bars[code]["amount"])) or np.any(
+                np.isnan(bars[code]["volume"])
+            ):
                 del bars[code]
                 print("delete bar with nan amount/volume: ", code)
                 continue
             _date_in_bar = bars[code]["frame"][0]
             if _date_in_bar < d0 or _date_in_bar > dt:
                 del bars[code]
-                logger.info("delete bar with invalid date (not in this month): %s, %s", code, _date_in_bar)
+                logger.info(
+                    "delete bar with invalid date (not in this month): %s, %s",
+                    code,
+                    _date_in_bar,
+                )
                 continue
-            
-            #print("sec added: ", code)
+
+            # print("sec added: ", code)
             all_valid_bars[code] = bars[code]
 
         start = end
-    
+
     return all_valid_bars

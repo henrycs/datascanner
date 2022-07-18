@@ -15,5 +15,3 @@ from coretypes import Frame, FrameType
 class QuotesFetcher(ABC):
     async def create_instance(self, **kwargs):
         raise NotImplementedError
-
-
