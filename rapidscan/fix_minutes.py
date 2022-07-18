@@ -14,15 +14,15 @@ from dfs_tools import write_bars_dfs
 from influx_data.security_bars_1d import get_security_day_bars
 from influx_data.security_bars_1m import get_security_minutes_data
 from influx_tools import remove_sec_in_bars1m
-from jq_fetcher import get_sec_bars_1m
+from jq_fetcher import get_sec_bars_min
 
 
 logger = logging.getLogger(__name__)
 
 
-async def get_1m_for_price(all_secs_today, target_date: datetime.date):
+async def get_min_for_price(all_secs_today, target_date: datetime.date, ft: FrameType):
     # download all data from jq
-    all_secs_data = await get_sec_bars_1m(all_secs_today, target_date)
+    all_secs_data = await get_sec_bars_min(all_secs_today, target_date)
     logger.info("total secs downloaded from bars:1m@jq, %d", len(all_secs_data))
 
     if len(all_secs_data) == 0:
@@ -36,8 +36,8 @@ async def get_1m_for_price(all_secs_today, target_date: datetime.date):
     return True
 
 
-async def scan_bars_1m_for_seclist(target_date: datetime.date):
-    all_secs_in_bars = await get_security_minutes_data(target_date)
+async def scan_bars_min_for_seclist(target_date: datetime.date, ft: FrameType):
+    all_secs_in_bars = await get_security_minutes_data(ft, target_date)
     if all_secs_in_bars is None:
         return None
 
@@ -49,9 +49,9 @@ async def scan_bars_1m_for_seclist(target_date: datetime.date):
     return secs_in_bars
 
 
-async def validate_bars_1m(target_day, secs_in_bars1d):
+async def validate_bars_min(target_day, secs_in_bars1d, ft: FrameType):
     # 获取所有分钟线的证券清单
-    secs_in_bars = await scan_bars_1m_for_seclist(target_day)
+    secs_in_bars = await scan_bars_min_for_seclist(target_day, ft)
     if secs_in_bars is None:
         return False
 
@@ -59,22 +59,23 @@ async def validate_bars_1m(target_day, secs_in_bars1d):
     x1 = secs_in_bars.difference(secs_in_bars1d)
     if len(x1) > 0:  # 需要删除
         for sec in x1:            
-            logger.info("bars:1m, to be removed: %s", sec)
-            await remove_sec_in_bars1m(sec, target_day)
-        logger.info("RebuildMin1, bars:1m, secs to be removed: %d", len(x1))
+            logger.info("bars:%s, to be removed: %s", ft.value, sec)
+            #await remove_sec_in_bars1m(sec, target_day)
+        logger.info("RebuildMin1, bars:%s, secs to be removed: %d, %s", ft.value, len(x1), target_day)
     
     # 需要增补的股票
     to_be_added = secs_in_bars1d.difference(secs_in_bars)    
     if len(to_be_added) > 0:
         for sec in to_be_added:
-            logger.info("bars:1m, to be added: %s", sec)
-        logger.info("RebuildMin1, bars:1m, secs to be added: %d", len(to_be_added))
+            logger.info("bars:%s, to be added: %s", ft.value, sec)
+        logger.info("RebuildMin1, bars:%s, secs to be added: %d, %s", ft.value, len(to_be_added), target_day)
     else:
         return True
 
-    rc = await get_1m_for_price(to_be_added, target_day)
+    #rc = await get_min_for_price(to_be_added, target_day, ft)
+    rc = True
     if not rc:
-        logger.error("failed to process stock price data (min1): %s", target_day)
+        logger.error("failed to process stock price data (%s): %s", ft, target_day)
         return False
 
     return True

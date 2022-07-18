@@ -1,37 +1,48 @@
-import asyncio
 import datetime
 import logging
-import os
-from os import path
-import time
 from typing import List
 
-import cfg4py
 import numpy as np
+from coretypes import FrameType
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 
 logger = logging.getLogger(__name__)
 
 
-async def get_sec_bars_1m(secs_set: set, dt: datetime.date):
+async def get_sec_bars_min(secs_set: set, dt: datetime.date, ft: FrameType):
     secs = list(secs_set)
     all_valid_bars = {}
 
     instance = AbstractQuotesFetcher.get_instance()
     end_dt = datetime.datetime.combine(dt, datetime.time(15, 0))
 
+    if ft == FrameType.MIN1:
+        max_secs = 15
+        n_bars = 240
+    elif ft == FrameType.MIN5:
+        max_secs = 80
+        n_bars = 48
+    elif ft == FrameType.MIN30:
+        max_secs = 450
+        n_bars = 8
+    elif ft == FrameType.MIN60:
+        max_secs = 900
+        n_bars = 4
+    else:
+        raise ValueError("invalid frametype: %s" % ft)
+
     start = 0
     left = len(secs)
     while left > 0:
-        if left > 15:  # 一次15*240=3500根
-            end = start + 15
-            left -= 15
+        if left > max_secs:  # 一次15*240=3500根
+            end = start + max_secs
+            left -= max_secs
         else:
             end = start + left
             left = 0
 
         _sec_list = secs[start : end]
-        bars = await instance.get_bars_batch(_sec_list, end_dt, 240, "1m", include_unclosed=True)
+        bars = await instance.get_bars_batch(_sec_list, end_dt, n_bars, ft.value, include_unclosed=True)
         for code in list(bars.keys()):
             if not len(bars[code]):
                 del bars[code]
@@ -44,7 +55,7 @@ async def get_sec_bars_1m(secs_set: set, dt: datetime.date):
             _date_in_bar = bars[code]["frame"][0]
             if _date_in_bar.date() != dt:
                 del bars[code]
-                logger.info("delete bar with earlier date (bars:1m): %s, %s", code, _date_in_bar)
+                logger.info("delete bar with earlier date (bars:%s): %s, %s", ft.value, code, _date_in_bar)
                 continue
             
             #print("sec added: ", code)

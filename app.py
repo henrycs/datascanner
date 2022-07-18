@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import os
@@ -6,11 +7,15 @@ from os import path
 import sys
 import time
 from typing import List
+import arrow
 
 import cfg4py
+from coretypes import FrameType
 import omicron
+from omicron.dal.cache import cache
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
-from main import scanner_main
+from main import get_cache_keyname, scanner_main
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,10 +66,32 @@ class Omega(object):
         self.fetcher_impl = fetcher_impl
         self.params = kwargs
 
+    async def check_running_conditions(self, ft):
+        dt1 = datetime.time(3, 0, 0)
+        dt2 = datetime.time(8, 0, 0)
+        dt3 = datetime.time(10, 10, 0)
+
+        now = datetime.datetime.now()    
+        nowtime = now.time()    
+
+        if nowtime < dt1:  # 3点前有其他任务
+            return False
+        if nowtime > dt2 and nowtime < dt3:  #交易时间段不执行
+            return False
+
+        key = get_cache_keyname(ft)
+        start_str = await cache.sys.get(key)
+        if start_str is None:
+            target_day = datetime.date(2022, 7, 16)
+        else:
+            target_day = arrow.get(start_str).date()
+        if target_day <= datetime.date(2005, 1, 4):
+            return False
+
+        return True
+
     async def init(self, *args):
         logger.info("init %s", self.__class__.__name__)
-
-        await AbstractQuotesFetcher.create_instance(self.fetcher_impl, **self.params)
 
         await omicron.cache.init()
         try:
@@ -76,7 +103,11 @@ class Omega(object):
 
         logger.info("<<< init %s process done", self.__class__.__name__)
 
-        await scanner_main()
+        ft = FrameType.MIN60
+        rc = await self.check_running_conditions(ft)
+        if rc:
+            #await AbstractQuotesFetcher.create_instance(self.fetcher_impl, **self.params)
+            await scanner_main(ft)
 
         await omicron.close()
 
