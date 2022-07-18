@@ -96,12 +96,13 @@ async def remove_sec_in_bars1d(code: str, target_date: datetime.date):
     await client.delete(measurement, stop=end, start=start_str, tags={"code": code})
 
 
-async def remove_sec_in_bars1m(code: str, target_date: datetime.date):
+async def remove_sec_in_bars_min(code: str, target_date: datetime.date, ft: FrameType):
     # 删除分钟线内所有数据
     start = datetime.datetime.combine(target_date, datetime.time(0, 0, 0))
     end = datetime.datetime.combine(target_date, datetime.time(23, 59, 59))
     start_str = f"{start.isoformat(timespec='seconds')}Z"
 
     client = Security.get_influx_client()
-    measurement = "stock_bars_1m"
+    measurement = "stock_bars_%s" % ft.value
     await client.delete(measurement, stop=end, start=start_str, tags={"code": code})
+    logger.info("remove sec from %s: %s, %s", measurement, code, target_date)
