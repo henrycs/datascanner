@@ -23,8 +23,11 @@ async def get_sec_bars_min(secs_set: set, dt: datetime.date, ft: FrameType):
     elif ft == FrameType.MIN5:
         max_secs = 80
         n_bars = 48
+    elif ft == FrameType.MIN15:
+        max_secs = 240
+        n_bars = 16
     elif ft == FrameType.MIN30:
-        max_secs = 450
+        max_secs = 480
         n_bars = 8
     elif ft == FrameType.MIN60:
         max_secs = 900

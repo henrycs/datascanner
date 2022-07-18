@@ -58,7 +58,7 @@ def get_bars_filename(
 
 async def write_bars_dfs(
     dt: datetime.date,
-    frame_type: List[FrameType],
+    frame_type: FrameType,
     bars: Union[Dict[str, np.ndarray], np.ndarray],
     prefix: SecurityType,
 ):

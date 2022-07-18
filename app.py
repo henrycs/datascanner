@@ -103,10 +103,12 @@ class Omega(object):
 
         logger.info("<<< init %s process done", self.__class__.__name__)
 
-        ft = FrameType.MIN60
+        ft = FrameType.MIN5
         rc = await self.check_running_conditions(ft)
         if rc:
-            # await AbstractQuotesFetcher.create_instance(self.fetcher_impl, **self.params)
+            await AbstractQuotesFetcher.create_instance(
+                self.fetcher_impl, **self.params
+            )
             await scanner_main(ft)
 
         await omicron.close()

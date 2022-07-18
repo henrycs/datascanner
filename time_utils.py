@@ -31,6 +31,7 @@ def get_cache_keyname(ft: FrameType):
         FrameType.DAY,
         FrameType.MIN1,
         FrameType.MIN5,
+        FrameType.MIN15,
         FrameType.MIN30,
         FrameType.MIN60,
     ):
@@ -48,8 +49,8 @@ async def check_running_conditions(instance):
     # now = datetime.datetime(2022, 7, 15, 18, 1, 0)
     nowtime = now.time()
 
-    # quota = await instance.get_quota()
-    quota = {"spare": 5000000}
+    quota = await instance.get_quota()
+    # quota = {"spare": 5000000}
     logger.info("current quota: %d", quota["spare"])
 
     if not TimeFrame.is_trade_day(now):

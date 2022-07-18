@@ -10,6 +10,7 @@ from omicron.models.security import Security
 from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame
 from omicron.models.timeframe import TimeFrame as tf
+from sqlalchemy import true
 
 from dfs_tools import write_bars_dfs
 from influx_data.security_bars_1d import get_security_day_bars
@@ -20,23 +21,37 @@ from jq_fetcher import get_sec_bars_min
 logger = logging.getLogger(__name__)
 
 
-async def get_min_for_price(all_secs_today, target_date: datetime.date, ft: FrameType):
+async def get_min_for_price(
+    all_secs_today,
+    target_date: datetime.date,
+    ft: FrameType,
+    prefix: SecurityType,
+    save_to_dfs: bool,
+):
     # download all data from jq
-    all_secs_data = await get_sec_bars_min(all_secs_today, target_date)
-    logger.info("total secs downloaded from bars:1m@jq, %d", len(all_secs_data))
+    all_secs_data = await get_sec_bars_min(all_secs_today, target_date, ft)
+    logger.info(
+        "total secs downloaded from bars:%s@jq, %d, %s",
+        ft.value,
+        len(all_secs_data),
+        prefix,
+    )
 
     if len(all_secs_data) == 0:
-        logger.info("no valid price data from bars:1m@jq, %s", target_date)
+        logger.info("no valid price data from bars:%s@jq, %s", ft.value, target_date)
         return True
 
-    await Stock.persist_bars(FrameType.MIN1, all_secs_data)
+    await Stock.persist_bars(ft, all_secs_data)
     logger.info(
-        "get from bars:1m@jq and saved into db, %s, %d",
-        FrameType.MIN1,
+        "get from bars:%s@jq and saved into db, %d",
+        ft.value,
         len(all_secs_data),
     )
 
-    logger.info("finished processing bars:1m for %s", target_date)
+    if save_to_dfs:
+        await write_bars_dfs(target_date, ft, all_secs_data, prefix)
+
+    logger.info("finished processing bars:%s for %s, %s", ft.value, target_date, prefix)
     return True
 
 
@@ -64,7 +79,7 @@ async def validate_bars_min(target_day, secs_in_bars1d, ft: FrameType):
     if len(x1) > 0:  # 需要删除
         for sec in x1:
             logger.info("bars:%s, to be removed: %s", ft.value, sec)
-            # await remove_sec_in_bars1m(sec, target_day)
+            await remove_sec_in_bars1m(sec, target_day)
         logger.info(
             "RebuildMin1, bars:%s, secs to be removed: %d, %s",
             ft.value,
@@ -86,10 +101,24 @@ async def validate_bars_min(target_day, secs_in_bars1d, ft: FrameType):
     else:
         return True
 
-    # rc = await get_min_for_price(to_be_added, target_day, ft)
-    rc = True
+    rc = await get_min_for_price(to_be_added, target_day, ft, SecurityType.STOCK, False)
     if not rc:
         logger.error("failed to process stock price data (%s): %s", ft, target_day)
+        return False
+
+    return True
+
+
+async def retrieve_bars_min(target_day, all_stocks, all_indexes, ft: FrameType):
+    # 下载全部分钟线数据
+    rc = await get_min_for_price(all_stocks, target_day, ft, SecurityType.STOCK, True)
+    if not rc:
+        logger.error("failed to process stock price data (%s): %s", ft, target_day)
+        return False
+
+    rc = await get_min_for_price(all_indexes, target_day, ft, SecurityType.INDEX, True)
+    if not rc:
+        logger.error("failed to process index price data (%s): %s", ft, target_day)
         return False
 
     return True

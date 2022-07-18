@@ -8,20 +8,32 @@ from omicron.dal.cache import cache
 from omicron.models.timeframe import TimeFrame
 
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
+from influx_data.security_list import get_security_list
 from influx_tools import drop_bars_1d, drop_bars_1M, drop_bars_1w, drop_bars_via_scope
 from rapidscan.fix_days import scan_bars_1d_for_seclist
 from rapidscan.fix_minutes import validate_bars_min
-from time_utils import check_running_conditions, get_cache_keyname, get_latest_day_str
+from time_utils import (
+    check_running_conditions,
+    get_cache_keyname,
+    get_latest_day_str,
+    split_securities,
+)
 
 logger = logging.getLogger(__name__)
 
 
-async def scanner_handler_minutes(ft: FrameType):
-    if ft not in (FrameType.MIN1, FrameType.MIN5, FrameType.MIN30, FrameType.MIN60):
+async def scanner_handler_minutes(ft: FrameType, reload_days: bool):
+    if ft not in (
+        FrameType.MIN1,
+        FrameType.MIN5,
+        FrameType.MIN15,
+        FrameType.MIN30,
+        FrameType.MIN60,
+    ):
         raise TypeError("FrameType not supported!")
 
-    # instance = AbstractQuotesFetcher.get_instance()
-    instance = None
+    instance = AbstractQuotesFetcher.get_instance()
+    # instance = None
 
     key = get_cache_keyname(ft)
     start_str = await cache.sys.get(key)
@@ -55,15 +67,33 @@ async def scanner_handler_minutes(ft: FrameType):
             target_day = TimeFrame.day_shift(target_day, -1)  # cache记录的天数前推一天
         logger.info("fetchbars1d, from jq: %s", target_day)
 
-        # 获取日线的证券清单（已校正）
-        secs_in_bars1d = await scan_bars_1d_for_seclist(target_day)
-        if secs_in_bars1d is None:
-            return False
+        # 从本地文件中读取有缺失记录的日期，逐天重新下载数据
+        if reload_days:
+            # 读取当天的证券列表
+            all_secs_in_cache = await get_security_list(target_day)
+            if all_secs_in_cache is None:
+                logger.error("no security list in date %s", target_day)
+                return False
 
-        rc = await validate_bars_min(target_day, secs_in_bars1d, ft)
-        if rc is False:
-            logger.error("failed to get bars:%s for date %s", ft.value, target_day)
-            return False
+            all_secs, all_indexes = split_securities(all_secs_in_cache)
+            if len(all_secs) == 0 or len(all_indexes) == 0:
+                logger.error("no stock or index list in date %s", target_day)
+                return False
+
+            rc = await validate_bars_min(target_day, all_secs, all_indexes, ft)
+            if rc is False:
+                logger.error("failed to get bars:%s for date %s", ft.value, target_day)
+                return False
+        else:
+            # 获取日线的证券清单（已校正）
+            secs_in_bars1d = await scan_bars_1d_for_seclist(target_day)
+            if secs_in_bars1d is None:
+                return False
+
+            rc = await validate_bars_min(target_day, secs_in_bars1d, ft)
+            if rc is False:
+                logger.error("failed to get bars:%s for date %s", ft.value, target_day)
+                return False
 
         # save timestamp
         await cache.sys.set(key, target_day.strftime("%Y-%m-%d"))
@@ -84,7 +114,7 @@ async def scanner_main(ft: FrameType):
         # await drop_bars_via_scope(target_year, FrameType.WEEK)
         # return True
 
-        await scanner_handler_minutes(ft)
+        await scanner_handler_minutes(ft, False)
 
     except Exception as e:
         logger.info("failed to execution: %s", e)
