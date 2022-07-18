@@ -8,17 +8,10 @@ from omicron.dal.cache import cache
 from omicron.models.timeframe import TimeFrame
 
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
-from influx_data.security_list import get_security_list
 from influx_tools import drop_bars_1d, drop_bars_1M, drop_bars_1w, drop_bars_via_scope
 from rapidscan.fix_days import scan_bars_1d_for_seclist
 from rapidscan.fix_minutes import validate_bars_min
-from rapidscan.get_days import retrieve_bars_1d
-from time_utils import (
-    check_running_conditions,
-    get_cache_keyname,
-    get_latest_day_str,
-    split_securities,
-)
+from time_utils import check_running_conditions, get_cache_keyname, get_latest_day_str
 
 logger = logging.getLogger(__name__)
 

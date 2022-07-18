@@ -7,11 +7,11 @@ from coretypes import FrameType
 from omicron.dal.cache import cache
 from omicron.models.timeframe import TimeFrame
 
+from download_bars.get_days import retrieve_bars_1d
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 from influx_data.security_list import get_security_list
 from rapidscan.fix_days import scan_bars_1d_for_seclist
 from rapidscan.fix_minutes import validate_bars_min
-from rapidscan.get_days import retrieve_bars_1d
 from time_utils import check_running_conditions, split_securities
 
 logger = logging.getLogger(__name__)
