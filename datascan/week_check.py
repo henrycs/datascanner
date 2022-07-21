@@ -49,8 +49,8 @@ async def get_security_week_bars(start: datetime.datetime, end: datetime.datetim
     return secs
 
 
-async def scan_bars_1w_for_seclist(target_date: datetime.date):
-    start = datetime.datetime.combine(target_date, datetime.time(0, 0, 0))
+async def scan_bars_1w_for_seclist(target_date: datetime.date, d0: datetime.date):
+    start = datetime.datetime.combine(d0, datetime.time(0, 0, 0))
     end = datetime.datetime.combine(target_date, datetime.time(23, 59, 59))
 
     all_secs_in_bars = await get_security_week_bars(start, end)
@@ -73,6 +73,8 @@ def get_security_difference(secs_in_bars, all_stock, all_index):
 
 
 async def validate_data_bars1w(target_date: datetime.date):
+    d0, d1 = TimeFrame.get_frame_scope(target_date, FrameType.WEEK)
+
     all_secs_in_jq = await get_security_list_jq(target_date)
     all_stock_jq, all_index_jq = split_securities_by_type_nparray(all_secs_in_jq)
     if (all_stock_jq is None or len(all_stock_jq) == 0) or (
@@ -81,10 +83,10 @@ async def validate_data_bars1w(target_date: datetime.date):
         logger.error("no security list (stock or index) in date %s", target_date)
         return False
 
-    logger.info("check bars:1w for open/close: %s", target_date)
-    all_db_secs_data = await scan_bars_1w_for_seclist(target_date)
+    logger.info("check bars:1w for open/close: %s - %s", d0, d1)
+    all_db_secs_data = await scan_bars_1w_for_seclist(d1, d0)
     if all_db_secs_data is None or len(all_db_secs_data) == 0:
-        logger.error("failed to get sec list from db for bars:1w/open, %s", target_date)
+        logger.error("failed to get sec list from db for bars:1w/open, %s, %s", d0, d1)
         return False
 
     # 因为有停牌的现象，所以对比证券清单的时候，只能比较本地是否有多余的票
@@ -95,11 +97,12 @@ async def validate_data_bars1w(target_date: datetime.date):
 
     # 对比详细数据
     all_secs_set_jq = all_stock_jq.union(all_index_jq)
-    all_jq_secs_data = await get_sec_bars_1w(all_secs_set_jq, target_date)
+    all_jq_secs_data = await get_sec_bars_1w(all_secs_set_jq, d1, d0)
     logger.info(
-        "total secs downloaded from bars:1w/open@jq, %d, %s",
+        "total secs downloaded from bars:1w/open@jq, %d, %s, %s",
         len(all_jq_secs_data),
-        target_date,
+        d0,
+        d1,
     )
     rc = compare_bars_wM_for_openclose(secs_list_db, all_db_secs_data, all_jq_secs_data)
     if not rc:

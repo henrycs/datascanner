@@ -27,11 +27,13 @@ def _compare_secs(secs_in_db, secs_in_jq):
     x1 = secs_in_db.difference(secs_in_jq)
     if len(x1) > 0:  # 本地数据库中多余的股票或指数
         logger.error("secs in bars:1d but not in jq, %d", len(x1))
+        logger.info(x1)
         return False
 
     y1 = secs_in_jq.difference(secs_in_db)
     if len(y1) > 0:  # 本地数据库中多余的股票或指数
         logger.error("secs in jq but not in bars:1d, %d", len(y1))
+        logger.info(y1)
         return False
 
     return True

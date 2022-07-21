@@ -93,19 +93,19 @@ async def validate_minute_bars(
     tmp_secs_list = list(secs_list)
     n_bars = 0
     if ft == FrameType.MIN1:
-        _tmp = np.random.choice(tmp_secs_list, 24, replace=False)
+        _tmp = np.random.choice(tmp_secs_list, 48, replace=False)
         n_bars = 240
     elif ft == FrameType.MIN5:
-        _tmp = np.random.choice(tmp_secs_list, 48, replace=False)
+        _tmp = np.random.choice(tmp_secs_list, 64, replace=False)
         n_bars = 48
     elif ft == FrameType.MIN15:
-        _tmp = np.random.choice(tmp_secs_list, 64, replace=False)
+        _tmp = np.random.choice(tmp_secs_list, 128, replace=False)
         n_bars = 16
     elif ft == FrameType.MIN30:
-        _tmp = np.random.choice(tmp_secs_list, 64, replace=False)
+        _tmp = np.random.choice(tmp_secs_list, 128, replace=False)
         n_bars = 8
     elif ft == FrameType.MIN60:
-        _tmp = np.random.choice(tmp_secs_list, 128, replace=False)
+        _tmp = np.random.choice(tmp_secs_list, 256, replace=False)
         n_bars = 4
     else:
         raise ValueError("FrameType %s not supported" % ft)

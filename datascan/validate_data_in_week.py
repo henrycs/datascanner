@@ -211,21 +211,23 @@ async def reverse_scanner_handler(scanning_type: int):
 
         # 周线和月线检查，通过读取cache中的时间记录，判断是否需要执行
         _week_day = await get_next_scanning_week_day(now.date())
-        if not _week_day:
+        if _week_day:
             try:
                 logger.info("data scanning for week: %s", _week_day)
                 await validate_data_bars1w(_week_day)
                 await update_scanned_week_day(_week_day)
+                break
             except Exception as e:
                 logger.error("validate_data_all(%s) exception: %s", _week_day, e)
                 rc = False
 
         _month_day = await get_next_scanning_month_day(now.date())
-        if not _month_day:
+        if _month_day:
             try:
                 logger.info("data scanning for month: %s", _month_day)
                 await validate_data_bars1M(_month_day)
                 await update_scanned_month_day(_month_day)
+                break
             except Exception as e:
                 logger.error("validate_data_all(%s) exception: %s", _month_day, e)
                 rc = False
@@ -252,7 +254,7 @@ async def reverse_scanner_handler(scanning_type: int):
                 logger.error("validate_data_all(%s) exception: %s", _day, e)
                 rc = False
 
-            rc = False
+            rc = True
             if not rc:
                 await save_days_with_issues(_day)
                 logger.error("failed to validate data of %s", _day)
