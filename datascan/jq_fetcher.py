@@ -71,7 +71,6 @@ async def get_sec_bars_min(secs_set: set, dt: datetime.date, ft: FrameType):
                 )
                 continue
 
-            # print("sec added: ", code)
             all_valid_bars[code] = bars[code]
 
         start = end
@@ -140,29 +139,6 @@ async def get_sec_bars_pricelimits(secs_set: set, dt: datetime.date):
     bars = bars[bars["frame"] == dt]
 
     return bars
-
-
-async def get_sec_bars_pricelimits_list(secs_set: set, dt: datetime.date):
-    secs = list(secs_set)
-    all_valid_bars = []
-
-    instance = AbstractQuotesFetcher.get_instance()
-
-    end = datetime.datetime.combine(dt, datetime.time(15, 0))
-
-    bars = await instance.get_trade_price_limits(secs, end)
-    bars = bars[~np.isnan(bars["low_limit"])]
-    bars = bars[~np.isnan(bars["high_limit"])]
-
-    for info in bars:
-        code = info[1]
-        if info[0] != dt:
-            logger.info("no data in target date (price limits), %s, %s", code, info)
-        else:
-            # print("sec added: ", code)
-            all_valid_bars.append(info)
-
-    return all_valid_bars
 
 
 async def get_sec_bars_1w(secs_set: set, dt: datetime.date, d0: datetime.date):

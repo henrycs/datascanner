@@ -9,7 +9,6 @@ from omicron.models.timeframe import TimeFrame
 
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 from influx_data.security_list import get_security_list
-from influx_tools import drop_bars_1d, drop_bars_1M, drop_bars_1w, drop_bars_via_scope
 from rapidscan.fix_days import scan_bars_1d_for_seclist
 from rapidscan.fix_minutes import validate_bars_min
 from time_utils import (
@@ -106,18 +105,28 @@ async def scanner_handler_minutes(ft: FrameType, reload_days: bool):
     return True
 
 
-async def scanner_main(ft: FrameType):
-    try:
-        # await drop_bars_1d()
-        # await drop_bars_1w()
-        # await drop_bars_1M()
-        # await drop_bars_via_scope(target_year, FrameType.WEEK)
-        # return True
+async def test_cache():
+    dt = datetime.datetime(2022, 7, 19, 9, 35)
+    p1 = 8.64
+    p2 = 8.66
+    p3 = 8.63
+    p4 = 8.66
+    vol1 = 121500
+    vol2 = 1050341
+    factor = 1.110297
+    code = "000982.XSHE"
 
-        await scanner_handler_minutes(ft, False)
+    import time
 
-    except Exception as e:
-        logger.info("failed to execution: %s", e)
-        return False
+    key = "datascan:codelist"
+    t0 = time.time()
+    pipeline = cache.security.pipeline()
+    for i in range(0, 5000):
+        _dstr = dt.strftime("%y%m%d%h%M%s")
+        data_str = f"{_dstr},{p1},{p2},{p3},{p4},{vol1},{vol2},{factor}"
+        code = "0%d.XSHE" % i
+        pipeline.hset(key, code, data_str)
 
-    logger.info("all tasks finished.")
+    await pipeline.execute()
+    t1 = time.time()
+    print("time cost: ", t1 - t0)

@@ -14,8 +14,9 @@ import omicron
 from coretypes import FrameType
 from omicron.dal.cache import cache
 
+from datascan.validate_data_in_week import reverse_scanner_handler
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
-from main import get_cache_keyname, scanner_main
+from rapidscan.main import get_cache_keyname
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ class Omega(object):
     async def check_running_conditions(self, ft):
         dt1 = datetime.time(3, 0, 0)
         dt2 = datetime.time(8, 0, 0)
-        dt3 = datetime.time(17, 10, 0)
+        dt3 = datetime.time(15, 30, 0)
 
         now = datetime.datetime.now()
         nowtime = now.time()
@@ -103,13 +104,28 @@ class Omega(object):
 
         logger.info("<<< init %s process done", self.__class__.__name__)
 
-        ft = FrameType.MIN5
-        rc = await self.check_running_conditions(ft)
+        # ft = FrameType.MIN5
+        # rc = await self.check_running_conditions(ft)
+        rc = True
         if rc:
             await AbstractQuotesFetcher.create_instance(
                 self.fetcher_impl, **self.params
             )
-            await scanner_main(ft)
+
+            try:
+                # await drop_bars_1d()
+                # await drop_bars_1w()
+                # await drop_bars_1M()
+                # await drop_bars_via_scope(target_year, FrameType.WEEK)
+                # return True
+
+                # await scanner_handler_minutes(ft, False)
+                await reverse_scanner_handler(scanning_type=1)
+            except Exception as e:
+                logger.info("failed to execution: %s", e)
+                return False
+
+            logger.info("all tasks finished.")
 
         await omicron.close()
 

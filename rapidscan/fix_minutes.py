@@ -12,11 +12,11 @@ from omicron.models.timeframe import TimeFrame
 from omicron.models.timeframe import TimeFrame as tf
 from sqlalchemy import true
 
+from datascan.jq_fetcher import get_sec_bars_min
 from dfs_tools import write_bars_dfs
 from influx_data.security_bars_1d import get_security_day_bars
 from influx_data.security_bars_1m import get_security_minutes_data
 from influx_tools import remove_sec_in_bars_min
-from jq_fetcher import get_sec_bars_min
 
 logger = logging.getLogger(__name__)
 
