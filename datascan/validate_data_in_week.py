@@ -10,7 +10,9 @@ from omicron.models.timeframe import TimeFrame
 
 from datascan.day_check import validate_day_bars
 from datascan.minute_check import validate_minute_bars
+from datascan.month_check import validate_data_bars1M
 from datascan.security_list_check import validate_security_list
+from datascan.week_check import validate_data_bars1w
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 
 logger = logging.getLogger(__name__)
@@ -119,6 +121,44 @@ async def get_time_scope_for_scanning(scanning_type: int, last_day: datetime.dat
     return days
 
 
+async def get_next_scanning_week_day(nowdate: datetime.date):
+    week_day_to_be_scanned = TimeFrame.week_shift(nowdate, 0)
+
+    key = "datascan:cursor:last_bars1w_day"
+    date_str = await cache.sys.get(key)
+    if not date_str:
+        return week_day_to_be_scanned
+    else:
+        last_scanning_day = arrow.get(date_str).date()
+        if week_day_to_be_scanned == last_scanning_day:
+            return None
+        return week_day_to_be_scanned
+
+
+async def update_scanned_week_day(target_date: datetime.date):
+    key = "datascan:cursor:last_bars1w_day"
+    await cache.sys.set(key, target_date.strftime("%Y-%m-%d"))
+
+
+async def get_next_scanning_month_day(nowdate: datetime.date):
+    month_day_to_be_scanned = TimeFrame.month_shift(nowdate, 0)
+
+    key = "datascan:cursor:last_bars1M_day"
+    date_str = await cache.sys.get(key)
+    if not date_str:
+        return month_day_to_be_scanned
+    else:
+        last_scanning_day = arrow.get(date_str).date()
+        if month_day_to_be_scanned == last_scanning_day:
+            return None
+        return month_day_to_be_scanned
+
+
+async def update_scanned_month_day(target_date: datetime.date):
+    key = "datascan:cursor:last_bars1M_day"
+    await cache.sys.set(key, target_date.strftime("%Y-%m-%d"))
+
+
 async def validate_data_all(target_date: datetime.date):
     # 读取当天的证券列表
     all_stock, all_index = await validate_security_list(target_date)
@@ -169,6 +209,28 @@ async def reverse_scanner_handler(scanning_type: int):
         if rc is False:
             return False
 
+        # 周线和月线检查，通过读取cache中的时间记录，判断是否需要执行
+        _week_day = await get_next_scanning_week_day(now.date())
+        if not _week_day:
+            try:
+                logger.info("data scanning for week: %s", _week_day)
+                await validate_data_bars1w(_week_day)
+                await update_scanned_week_day(_week_day)
+            except Exception as e:
+                logger.error("validate_data_all(%s) exception: %s", _week_day, e)
+                rc = False
+
+        _month_day = await get_next_scanning_month_day(now.date())
+        if not _month_day:
+            try:
+                logger.info("data scanning for month: %s", _month_day)
+                await validate_data_bars1M(_month_day)
+                await update_scanned_month_day(_month_day)
+            except Exception as e:
+                logger.error("validate_data_all(%s) exception: %s", _month_day, e)
+                rc = False
+
+        # 检查日线和分钟线
         days = await get_time_scope_for_scanning(scanning_type, last_trade_day)
         if days is None or len(days) == 0:
             logger.info(
@@ -179,13 +241,10 @@ async def reverse_scanner_handler(scanning_type: int):
             return True
 
         days.sort()
-        logger.info(
-            "data scanning starts, from %s, total days: %d", last_trade_day, len(days)
-        )
-
         for _day in days:
             _day = TimeFrame.int2date(_day)
             _day = datetime.date(2006, 3, 2)
+            logger.info("data scanning for: %s", _day)
 
             try:
                 rc = await validate_data_all(_day)
