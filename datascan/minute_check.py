@@ -115,6 +115,17 @@ async def validate_minute_bars(
         logger.error("failed to random.choice from sec list, %s (%s)", target_date, ft)
         return False
 
+    if "000001.XSHG" in all_index:
+        secs_set.add("000001.XSHG")  # 上证指数
+    if "399001.XSHE" in all_index:
+        secs_set.add("399001.XSHE")  # 深证成指
+    if "399006.XSHE" in all_index:
+        secs_set.add("399006.XSHE")  # 创业板指
+    if "000300.XSHG" in all_index:
+        secs_set.add("000300.XSHG")  # 沪深300
+    if "399300.XSHE" in all_index:
+        secs_set.add("399300.XSHE")  # 沪深300
+
     all_jq_secs_data = await get_sec_bars_min(secs_set, target_date, ft)
     if len(all_jq_secs_data) == 0:
         logger.info("no valid price data from bars:%s@jq, %s", ft.value, target_date)
