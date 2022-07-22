@@ -17,6 +17,7 @@ from omicron.dal.cache import cache
 from datascan.validate_data_in_week import reverse_scanner_handler
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 from rapidscan.main import get_cache_keyname
+from rebuild_minio.build_min_data import rebuild_minio_for_min
 
 logger = logging.getLogger(__name__)
 
@@ -108,9 +109,7 @@ class Omega(object):
         # rc = await self.check_running_conditions(ft)
         rc = True
         if rc:
-            await AbstractQuotesFetcher.create_instance(
-                self.fetcher_impl, **self.params
-            )
+            # await AbstractQuotesFetcher.create_instance(self.fetcher_impl, **self.params)
 
             try:
                 # await drop_bars_1d()
@@ -120,7 +119,8 @@ class Omega(object):
                 # return True
 
                 # await scanner_handler_minutes(ft, False)
-                await reverse_scanner_handler(scanning_type=1)
+                # await reverse_scanner_handler(scanning_type=1)
+                await rebuild_minio_for_min()
             except Exception as e:
                 logger.info("failed to execution: %s", e)
                 return False

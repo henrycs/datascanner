@@ -236,3 +236,49 @@ def compare_bars_wM_for_openclose(secs_in_db, data_in_db, data_in_jq):
             return False
 
     return True
+
+
+def compare_sec_data_full(sec_data_1, sec_data_2):
+    v1 = math_round(sec_data_1["open"], 2)
+    v2 = math_round(sec_data_2["open"], 2)
+    if math.isclose(v1, v2, abs_tol=1e-2) is False:
+        logger.error("[open] not equal in db and jq: %f, %f", v1, v2)
+        return False
+
+    v1 = math_round(sec_data_1["close"], 2)
+    v2 = math_round(sec_data_2["close"], 2)
+    if math.isclose(v1, v2, abs_tol=1e-2) is False:
+        logger.error("[close] not equal in db and jq: %f, %f", v1, v2)
+        return False
+
+    v1 = math_round(sec_data_1["high"], 2)
+    v2 = math_round(sec_data_2["high"], 2)
+    if math.isclose(v1, v2, abs_tol=1e-2) is False:
+        logger.error("[high] not equal in db and jq: %f, %f", v1, v2)
+        return False
+
+    v1 = math_round(sec_data_1["low"], 2)
+    v2 = math_round(sec_data_2["low"], 2)
+    if math.isclose(v1, v2, abs_tol=1e-2) is False:
+        logger.error("[low] not equal in db and jq: %f, %f", v1, v2)
+        return False
+
+    v1 = math_round(sec_data_1["factor"], 3)
+    v2 = math_round(sec_data_2["factor"], 3)
+    if math.isclose(v1, v2, abs_tol=1e-2) is False:
+        logger.error("[factor] not equal in db and jq: %f, %f", v1, v2)
+        return False
+
+    v1 = sec_data_1["volume"]
+    v2 = sec_data_2["volume"]
+    if v1 != v2:
+        logger.error("[volume] not equal in db and jq: %f, %f", v1, v2)
+        return False
+
+    v1 = sec_data_1["amount"]
+    v2 = sec_data_2["amount"]
+    if v1 != v2:
+        logger.error("[amount] not equal in db and jq: %f, %f", v1, v2)
+        return False
+
+    return True
