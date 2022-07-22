@@ -54,13 +54,6 @@ async def get_security_list_db(target_date: datetime.date):
     return all_secs_in_cache
 
 
-async def get_sec_minutes_data_db(ft: FrameType, target_date: datetime.date):
-    _start = datetime.datetime.combine(target_date, datetime.time(9, 30, 0))
-    _end = datetime.datetime.combine(target_date, datetime.time(15, 30, 1))
-    secs = await get_security_minutes_bars(ft, _start, _end)
-    return secs
-
-
 def convert_data_format(tuple_arr):
     dtype = [
         ("frame", "O"),
@@ -155,12 +148,20 @@ async def get_security_minutes_bars(
     return new_data_by_sec
 
 
+async def get_sec_minutes_data_db(ft: FrameType, target_date: datetime.date):
+    _start = datetime.datetime.combine(target_date, datetime.time(9, 30, 0))
+    _end = datetime.datetime.combine(target_date, datetime.time(15, 30, 1))
+    secs = await get_security_minutes_bars(ft, _start, _end)
+    return secs
+
+
 async def generate_minio_for_min(target_date: datetime.date, ft: FrameType):
     # 从数据库中读取当天的证券列表
     all_secs_in_cache = await get_security_list_db(target_date)
     if all_secs_in_cache is None:
         return False
     all_stock_db, all_index_db = split_securities_by_type(all_secs_in_cache)
+    logger.info("stock secs: %d, index secs: %d", len(all_stock_db), len(all_index_db))
 
     secs_data = await get_sec_minutes_data_db(ft, target_date)
     if secs_data is None or len(secs_data) == 0:
@@ -239,6 +240,7 @@ async def rebuild_minio_for_min():
             line = line.strip()
             if len(line) == 0:
                 continue
+            logger.info("start processing %s in %s", ft.value, target_date)
 
             target_date = arrow.get(line).naive.date()
             # target_date = datetime.date(2022, 7, 11)
@@ -247,7 +249,8 @@ async def rebuild_minio_for_min():
                 logger.error(
                     "failed to rebuild minio data for %s, %s", ft.value, target_date
                 )
-            logger.info("finished processing %s for %s", target_date, ft.value)
-            break
+                break
+            logger.info("finished processing %s of %s", ft.value, target_date)
+            #break
 
     return True
