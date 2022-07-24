@@ -8,8 +8,8 @@ from coretypes import FrameType
 from omicron.dal.cache import cache
 from omicron.models.timeframe import TimeFrame
 
-from datascan.day_check import validate_day_bars
-from datascan.minute_check import validate_minute_bars
+from datascan.day_check import get_all_secs_in_bars1d_db, validate_day_bars
+from datascan.minute_check import validate_minute_bars, validate_minute_bars_simple
 from datascan.month_check import validate_data_bars1M
 from datascan.security_list_check import validate_security_list
 from datascan.week_check import validate_data_bars1w
@@ -168,11 +168,13 @@ async def validate_data_all(target_date: datetime.date):
         logger.error("no security list (stock or index) in date %s", target_date)
         return False
 
-    # rc = await validate_day_bars(target_date, all_stock, all_index)
-    rc = True
+    rc = await validate_day_bars(target_date, all_stock, all_index)
     if rc is False:
         logger.error("failed to get bars:1d for date %s", target_date)
         return False
+
+    # 以日线为基准
+    all_secs_in_db = await get_all_secs_in_bars1d_db(target_date)
 
     for ft in (
         FrameType.MIN1,
@@ -181,7 +183,8 @@ async def validate_data_all(target_date: datetime.date):
         FrameType.MIN30,
         FrameType.MIN60,
     ):
-        rc = await validate_minute_bars(target_date, all_stock, all_index, ft)
+        rc = await validate_minute_bars_simple(target_date, all_secs_in_db, ft)
+        # rc = True
         if rc is False:
             logger.error("failed to get bars:%s for date %s", ft.value, target_date)
             return False
@@ -197,7 +200,7 @@ async def reverse_scanner_handler(scanning_type: int):
     # instance = None
 
     now = datetime.datetime.now()
-    now = datetime.datetime(2022, 7, 16, 11, 1, 0)
+    now = datetime.datetime(2022, 7, 23, 11, 1, 0)
     if TimeFrame.is_trade_day(now):
         logger.info("only scanning data in non-trade days: %s", now.date())
         return False
@@ -213,6 +216,7 @@ async def reverse_scanner_handler(scanning_type: int):
         _week_day = await get_next_scanning_week_day(now.date())
         if _week_day:
             try:
+                # _week_day = datetime.date(2022, 7, 15)
                 logger.info("data scanning for week: %s", _week_day)
                 await validate_data_bars1w(_week_day)
                 await update_scanned_week_day(_week_day)
@@ -227,7 +231,7 @@ async def reverse_scanner_handler(scanning_type: int):
                 logger.info("data scanning for month: %s", _month_day)
                 await validate_data_bars1M(_month_day)
                 await update_scanned_month_day(_month_day)
-                break
+                # break
             except Exception as e:
                 logger.error("validate_data_all(%s) exception: %s", _month_day, e)
                 rc = False
@@ -245,7 +249,7 @@ async def reverse_scanner_handler(scanning_type: int):
         days.sort()
         for _day in days:
             _day = TimeFrame.int2date(_day)
-            _day = datetime.date(2006, 3, 2)
+            _day = datetime.date(2022, 7, 22)
             logger.info("data scanning for: %s", _day)
 
             try:
@@ -265,6 +269,7 @@ async def reverse_scanner_handler(scanning_type: int):
             await update_scanning_date(scanning_type, _day)
 
             input("next day...")
+            break
 
         if os.path.exists("/home/henry/zillionare/data_scanner/break.txt"):
             logger.info("break flag detected, exit")

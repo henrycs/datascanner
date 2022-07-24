@@ -17,6 +17,7 @@ from omicron.models.timeframe import TimeFrame
 from datascan.scanner_utils import compare_sec_data_full
 from dfs_tools import write_bars_dfs
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
+from influx_data.security_list import get_security_list
 
 logger = logging.getLogger(__name__)
 
@@ -41,17 +42,6 @@ def split_securities_by_type(all_secs_in_cache):
             all_indexes.add(code)
 
     return all_secs, all_indexes
-
-
-async def get_security_list_db(target_date: datetime.date):
-    all_secs_in_cache = (
-        await Security.select(target_date).types(["stock", "index"]).eval()
-    )
-    if all_secs_in_cache is None or len(all_secs_in_cache) < 100:
-        logger.error("failed to query securities from db, %s", target_date)
-        return None
-
-    return all_secs_in_cache
 
 
 def convert_data_format(tuple_arr):
@@ -157,7 +147,7 @@ async def get_sec_minutes_data_db(ft: FrameType, target_date: datetime.date):
 
 async def generate_minio_for_min(target_date: datetime.date, ft: FrameType):
     # 从数据库中读取当天的证券列表
-    all_secs_in_cache = await get_security_list_db(target_date)
+    all_secs_in_cache = await get_security_list(target_date)
     if all_secs_in_cache is None:
         return False
     all_stock_db, all_index_db = split_securities_by_type(all_secs_in_cache)
@@ -221,8 +211,21 @@ def test_read_file():
     print("success!")
 
 
+def test_read_file_for_sec():
+    file = "/home/henry/zillionare/20220719"
+    with open(file, "rb") as f:
+        binary1 = pickle.load(f)
+        print("size: ", len(binary1))
+
+    for code in binary1:
+        if code == "601212.XSHG":
+            print(binary1[code])
+
+    print("success!")
+
+
 async def rebuild_minio_for_min():
-    # test_read_file()
+    # test_read_file_for_sec()
     # return
 
     # FrameType.MIN1,
@@ -240,7 +243,7 @@ async def rebuild_minio_for_min():
             line = line.strip()
             if len(line) == 0:
                 continue
-            logger.info("start processing %s in %s", ft.value, target_date)
+            logger.info("start processing %s in %s", ft.value, line)
 
             target_date = arrow.get(line).naive.date()
             # target_date = datetime.date(2022, 7, 11)
@@ -251,6 +254,6 @@ async def rebuild_minio_for_min():
                 )
                 break
             logger.info("finished processing %s of %s", ft.value, target_date)
-            #break
+            # break
 
     return True

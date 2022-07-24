@@ -31,7 +31,7 @@ async def get_security_week_bars(start: datetime.datetime, end: datetime.datetim
         .measurement(measurement)
         .range(start, end)
         .bucket(client._bucket)
-        .fields(["open", "close", "high", "volume"])
+        .fields(["open", "high", "low", "close", "volume"])
     )
 
     data = await client.query(flux)
@@ -40,7 +40,7 @@ async def get_security_week_bars(start: datetime.datetime, end: datetime.datetim
 
     ds = DataframeDeserializer(
         sort_values="_time",
-        usecols=["_time", "code", "open", "close", "high", "volume"],
+        usecols=["_time", "code", "open", "high", "low", "close", "volume"],
         time_col="_time",
         engine="c",
     )
@@ -49,13 +49,13 @@ async def get_security_week_bars(start: datetime.datetime, end: datetime.datetim
     return secs
 
 
-async def scan_bars_1w_for_seclist(target_date: datetime.date, d0: datetime.date):
+async def scan_bars_1w_for_seclist(d0: datetime.date, d1: datetime.date):
     start = datetime.datetime.combine(d0, datetime.time(0, 0, 0))
-    end = datetime.datetime.combine(target_date, datetime.time(23, 59, 59))
+    end = datetime.datetime.combine(d1, datetime.time(23, 59, 59))
 
     all_secs_in_bars = await get_security_week_bars(start, end)
     if all_secs_in_bars is None or len(all_secs_in_bars) == 0:
-        logger.error("no secs found in bars:1w/open, %s", target_date)
+        logger.error("no secs found in bars:1w/open, %s", d1)
         return None
 
     return all_secs_in_bars
@@ -75,16 +75,28 @@ def get_security_difference(secs_in_bars, all_stock, all_index):
 async def validate_data_bars1w(target_date: datetime.date):
     d0, d1 = TimeFrame.get_frame_scope(target_date, FrameType.WEEK)
 
-    all_secs_in_jq = await get_security_list_jq(target_date)
-    all_stock_jq, all_index_jq = split_securities_by_type_nparray(all_secs_in_jq)
-    if (all_stock_jq is None or len(all_stock_jq) == 0) or (
-        all_index_jq is None or len(all_index_jq) == 0
+    all_secs_in_jq1 = await get_security_list_jq(d0)
+    all_stock_jq1, all_index_jq1 = split_securities_by_type_nparray(all_secs_in_jq1)
+    if (all_stock_jq1 is None or len(all_stock_jq1) == 0) or (
+        all_index_jq1 is None or len(all_index_jq1) == 0
     ):
-        logger.error("no security list (stock or index) in date %s", target_date)
+        logger.error("no security list (stock or index) in date %s", d0)
         return False
 
+    all_secs_in_jq2 = await get_security_list_jq(d1)
+    all_stock_jq2, all_index_jq2 = split_securities_by_type_nparray(all_secs_in_jq2)
+    if (all_stock_jq2 is None or len(all_stock_jq2) == 0) or (
+        all_index_jq2 is None or len(all_index_jq2) == 0
+    ):
+        logger.error("no security list (stock or index) in date %s", d1)
+        return False
+
+    # 合并本周第一天和最后一天的证券列表（不用判断两天是否为同一天）
+    all_stock_jq = all_stock_jq1.union(all_stock_jq2)
+    all_index_jq = all_index_jq1.union(all_index_jq2)
+
     logger.info("check bars:1w for open/close: %s - %s", d0, d1)
-    all_db_secs_data = await scan_bars_1w_for_seclist(d1, d0)
+    all_db_secs_data = await scan_bars_1w_for_seclist(d0, d1)
     if all_db_secs_data is None or len(all_db_secs_data) == 0:
         logger.error("failed to get sec list from db for bars:1w/open, %s, %s", d0, d1)
         return False

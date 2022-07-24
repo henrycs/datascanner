@@ -14,7 +14,11 @@ import omicron
 from coretypes import FrameType
 from omicron.dal.cache import cache
 
+from data_fix.download_days import redownload_bars1d_for_target_day
+from data_fix.download_mins import redownload_bars_mins_for_target_day
+from data_fix.download_week import redownload_bars1w_for_target_day
 from datascan.validate_data_in_week import reverse_scanner_handler
+from download_bars.day_handler import scanner_handler_day
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 from rapidscan.main import get_cache_keyname
 from rebuild_minio.build_min_data import rebuild_minio_for_min
@@ -109,7 +113,9 @@ class Omega(object):
         # rc = await self.check_running_conditions(ft)
         rc = True
         if rc:
-            # await AbstractQuotesFetcher.create_instance(self.fetcher_impl, **self.params)
+            await AbstractQuotesFetcher.create_instance(
+                self.fetcher_impl, **self.params
+            )
 
             try:
                 # await drop_bars_1d()
@@ -118,9 +124,13 @@ class Omega(object):
                 # await drop_bars_via_scope(target_year, FrameType.WEEK)
                 # return True
 
+                # await scanner_handler_day()
                 # await scanner_handler_minutes(ft, False)
-                # await reverse_scanner_handler(scanning_type=1)
-                await rebuild_minio_for_min()
+                await reverse_scanner_handler(scanning_type=0)
+                # await redownload_bars1w_for_target_day()
+                # await redownload_bars1d_for_target_day()
+                # await redownload_bars_mins_for_target_day()
+                # await rebuild_minio_for_min()
             except Exception as e:
                 logger.info("failed to execution: %s", e)
                 return False

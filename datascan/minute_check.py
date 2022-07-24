@@ -11,16 +11,8 @@ from omicron.dal.influx.serialize import EPOCH, DataframeDeserializer
 from omicron.models.security import Security
 from omicron.models.timeframe import TimeFrame
 
-from datascan.jq_fetcher import (
-    get_sec_bars_1d,
-    get_sec_bars_min,
-    get_sec_bars_pricelimits,
-)
-from datascan.scanner_utils import (
-    compare_bars_for_openclose,
-    compare_bars_min_for_openclose,
-    get_secs_from_bars,
-)
+from datascan.jq_fetcher import get_sec_bars_min
+from datascan.scanner_utils import get_secs_from_bars
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 
 logger = logging.getLogger(__name__)
@@ -29,6 +21,13 @@ logger = logging.getLogger(__name__)
 async def get_sec_minutes_data_db(ft: FrameType, target_date: datetime.date):
     _start = datetime.datetime.combine(target_date, datetime.time(9, 30, 0))
     _end = datetime.datetime.combine(target_date, datetime.time(15, 30, 1))
+    secs = await get_security_minutes_bars(ft, _start, _end)
+    return secs
+
+
+async def get_seclist_from_minutes_data_db(ft: FrameType, target_date: datetime.date):
+    _start = datetime.datetime.combine(target_date, datetime.time(11, 30, 0))
+    _end = datetime.datetime.combine(target_date, datetime.time(11, 30, 1))
     secs = await get_security_minutes_bars(ft, _start, _end)
     return secs
 
@@ -73,8 +72,42 @@ def get_security_difference(secs_in_bars, all_stock, all_index, ft):
     return True
 
 
+def compare_seclist_difference(secs_in_day, secs_in_min, ft: FrameType):
+    # 检查是否有多余的股票
+    x1 = secs_in_min.difference(secs_in_day)
+    if len(x1) > 0:  # 分钟线有，但日线啊没有
+        logger.error("secs in bars:%s but not in bars:1d, %d", ft.value, len(x1))
+        return False
+
+    y1 = secs_in_day.difference(secs_in_min)
+    if len(y1) > 0:  # 日线有，但分钟线没有
+        logger.error("secs in bars:1d but not in bars:%s, %d", ft.value, len(y1))
+        return False
+
+    return True
+
+
+async def validate_minute_bars_simple(
+    target_date: datetime.date, all_secs_in_day, ft: FrameType
+):
+    logger.info("check bars:%s for open/close: %s", ft.value, target_date)
+    all_db_secs_min = await get_seclist_from_minutes_data_db(ft, target_date)
+    if all_db_secs_min is None or len(all_db_secs_min) == 0:
+        logger.error(
+            "failed to get sec list from db for bars:%s/open, %s", ft.value, target_date
+        )
+        return False
+
+    secs_list = get_secs_from_bars(all_db_secs_min)
+    rc = compare_seclist_difference(secs_list, all_secs_in_day, ft)
+    if not rc:
+        return False
+
+    return True
+
+
 async def validate_minute_bars(
-    target_date: datetime.date, all_stock, all_index, ft: FrameType
+    target_date: datetime.date, all_stock, all_index, all_secs_in_db, ft: FrameType
 ):
     logger.info("check bars:%s for open/close: %s", ft.value, target_date)
     all_db_secs_data = await get_sec_minutes_data_db(ft, target_date)
@@ -89,60 +122,14 @@ async def validate_minute_bars(
     if not rc:
         return False
 
-    # 对比详细数据
-    tmp_secs_list = list(secs_list)
-    n_bars = 0
-    if ft == FrameType.MIN1:
-        _tmp = np.random.choice(tmp_secs_list, 48, replace=False)
-        n_bars = 240
-    elif ft == FrameType.MIN5:
-        _tmp = np.random.choice(tmp_secs_list, 64, replace=False)
-        n_bars = 48
-    elif ft == FrameType.MIN15:
-        _tmp = np.random.choice(tmp_secs_list, 128, replace=False)
-        n_bars = 16
-    elif ft == FrameType.MIN30:
-        _tmp = np.random.choice(tmp_secs_list, 128, replace=False)
-        n_bars = 8
-    elif ft == FrameType.MIN60:
-        _tmp = np.random.choice(tmp_secs_list, 256, replace=False)
-        n_bars = 4
-    else:
-        raise ValueError("FrameType %s not supported" % ft)
-
-    secs_set = set(_tmp)
-    if len(secs_set) == 0:
-        logger.error("failed to random.choice from sec list, %s (%s)", target_date, ft)
-        return False
-
-    if "000001.XSHG" in all_index:
-        secs_set.add("000001.XSHG")  # 上证指数
-    if "399001.XSHE" in all_index:
-        secs_set.add("399001.XSHE")  # 深证成指
-    if "399006.XSHE" in all_index:
-        secs_set.add("399006.XSHE")  # 创业板指
-    if "000300.XSHG" in all_index:
-        secs_set.add("000300.XSHG")  # 沪深300
-    if "399300.XSHE" in all_index:
-        secs_set.add("399300.XSHE")  # 沪深300
-
-    all_jq_secs_data = await get_sec_bars_min(secs_set, target_date, ft)
-    if len(all_jq_secs_data) == 0:
-        logger.info("no valid price data from bars:%s@jq, %s", ft.value, target_date)
-        return True
+    # 针对分钟线重采样数据
 
     # 因为是抽选股票，所以不能和日线那样做完全比较
-    rc = compare_bars_min_for_openclose(
-        secs_set, all_db_secs_data, all_jq_secs_data, n_bars
-    )
-    if not rc:
-        logger.error("failed to compare sec data in db and jq, %s", target_date)
-        return False
 
     logger.info(
         "total secs downloaded from bars:%s/open@jq, %d, %s",
         ft.value,
-        len(all_jq_secs_data),
+        len(secs_list),
         target_date,
     )
 

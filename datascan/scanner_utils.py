@@ -39,72 +39,110 @@ def _compare_secs(secs_in_db, secs_in_jq):
     return True
 
 
-def _compare_sec_data(sec_data_db, sec_data_jq):
+def _compare_sec_data(sec_data_db, sec_data_jq, is_index):
+    if is_index:
+        delta = 2e-2
+    else:
+        delta = 1e-2
+
     v1 = math_round(sec_data_db["open"], 2)
-    v2 = math_round(sec_data_jq["open"], 2)
-    if math.isclose(v1, v2, abs_tol=1e-2) is False:
+    v2 = math_round(sec_data_jq["open"][0].item(), 2)
+    if math.isclose(v1, v2, abs_tol=delta) is False:
         logger.error("[open] not equal in db and jq: %f, %f", v1, v2)
         return False
 
+    v1 = math_round(sec_data_db["high"], 2)
+    v2 = math_round(sec_data_jq["high"][0].item(), 2)
+    if math.isclose(v1, v2, abs_tol=delta) is False:
+        logger.error("[high] not equal in db and jq: %f, %f", v1, v2)
+        return False
+
+    v1 = math_round(sec_data_db["low"], 2)
+    v2 = math_round(sec_data_jq["low"][0].item(), 2)
+    if math.isclose(v1, v2, abs_tol=delta) is False:
+        logger.error("[low] not equal in db and jq: %f, %f", v1, v2)
+        return False
+
     v1 = math_round(sec_data_db["close"], 2)
-    v2 = math_round(sec_data_jq["close"], 2)
-    if math.isclose(v1, v2, abs_tol=1e-2) is False:
+    v2 = math_round(sec_data_jq["close"][0].item(), 2)
+    if math.isclose(v1, v2, abs_tol=delta) is False:
         logger.error("[close] not equal in db and jq: %f, %f", v1, v2)
         return False
 
     v1 = sec_data_db["volume"]
-    v2 = sec_data_jq["volume"]
+    v2 = sec_data_jq["volume"][0].item()
     if v1 != v2:
         logger.error("[volume] not equal in db and jq: %f, %f", v1, v2)
         return False
 
-    v1 = math_round(sec_data_db["factor"], 3)
-    v2 = math_round(sec_data_jq["factor"], 3)
-    if math.isclose(v1, v2, abs_tol=1e-4) is False:
+    v1 = sec_data_db["factor"]
+    v2 = sec_data_jq["factor"][0].item()
+    if math.isclose(v1, v2, abs_tol=1e-5) is False:
         logger.error("[factor] not equal in db and jq: %f, %f", v1, v2)
         return False
 
     return True
 
 
-def _compare_sec_data_pricelimits(sec_data_db, sec_data_jq):
+def _compare_sec_data_pricelimits(sec_data_db, sec_data_jq, is_index):
+    if is_index:
+        delta = 2e-2
+    else:
+        delta = 1e-2
+
     v1 = math_round(sec_data_db["high_limit"], 2)
     v2 = math_round(sec_data_jq["high_limit"], 2)
-    if math.isclose(v1, v2, abs_tol=1e-2) is False:
+    if math.isclose(v1, v2, abs_tol=delta) is False:
         logger.error("[high_limit] not equal in db and jq: %f, %f", v1, v2)
         return False
 
     v1 = math_round(sec_data_db["low_limit"], 2)
     v2 = math_round(sec_data_jq["low_limit"], 2)
-    if math.isclose(v1, v2, abs_tol=1e-2) is False:
+    if math.isclose(v1, v2, abs_tol=delta) is False:
         logger.error("[low_limit] not equal in db and jq: %f, %f", v1, v2)
         return False
 
     return True
 
 
-def compare_bars_for_openclose(secs_in_db, data_in_db, data_in_jq):
+def compare_bars_for_openclose(
+    secs_in_db, data_in_db, data_in_jq, all_index, index_whitelist
+):
     # influxdb取回的数据是f8，并且是rec.array的数组
     # jq fetcher取回的数据是字典，key为股票代码，value是np.array，f4
 
     # 对比两个集合中的股票代码，是否完全一致
     secs_in_jq = set(data_in_jq.keys())
     rc = _compare_secs(secs_in_db, secs_in_jq)
+    rc = True
     if not rc:
         return False
 
     for sec_data in data_in_db:
         code = sec_data["code"]
+
+        is_index = False
+        if code in all_index:
+            is_index = True
+        if is_index:
+            if code not in index_whitelist:
+                continue  # 不在白名单内的指数跳过检查
+
         sec_data_jq = data_in_jq[code]
-        rc = _compare_sec_data(sec_data, sec_data_jq)
+        rc = _compare_sec_data(sec_data, sec_data_jq, is_index)
         if not rc:
-            logger.error("code %s, failed to validate price", code)
-            return False
+            if is_index:
+                logger.error("index code %s, failed to validate price", code)
+            else:
+                logger.error("stock code %s, failed to validate price", code)
+            # return False
 
     return True
 
 
-def compare_bars_for_pricelimits(secs_in_db, data_in_db, data_in_jq):
+def compare_bars_for_pricelimits(
+    secs_in_db, data_in_db, data_in_jq, all_index, index_whitelist
+):
     # influxdb取回的数据是f8，并且是rec.array的数组
     # jq fetcher取回的数据是字典，key为股票代码，value是np.array，f4
 
@@ -116,41 +154,52 @@ def compare_bars_for_pricelimits(secs_in_db, data_in_db, data_in_jq):
 
     secs_in_jq = set(_jq_data_dict.keys())
     rc = _compare_secs(secs_in_db, secs_in_jq)
+    rc = True
     if not rc:
         return False
 
     for sec_data in data_in_db:
         code = sec_data["code"]
+
+        is_index = False
+        if code in all_index:
+            is_index = True
+        if is_index and (code not in index_whitelist):
+            continue  # 不在白名单内的指数跳过检查
+
         sec_data_jq = _jq_data_dict[code]
-        rc = _compare_sec_data_pricelimits(sec_data, sec_data_jq)
+        rc = _compare_sec_data_pricelimits(sec_data, sec_data_jq, is_index)
         if not rc:
-            logger.error("code %s, failed to validate price limits", code)
-            return False
+            if is_index:
+                logger.error("index code %s, failed to validate price limits", code)
+            else:
+                logger.error("stock code %s, failed to validate price limits", code)
+            # return False
 
     return True
 
 
 def _compare_sec_min_data(sec_data_db, sec_data_jq):
     v1 = math_round(sec_data_db["open"], 2)
-    v2 = math_round(sec_data_jq["open"], 2)
+    v2 = math_round(sec_data_jq["open"][0].item(), 2)
     if math.isclose(v1, v2, abs_tol=1e-2) is False:
         logger.error("[open] not equal in db and jq: %f, %f", v1, v2)
         return False
 
     v1 = math_round(sec_data_db["close"], 2)
-    v2 = math_round(sec_data_jq["close"], 2)
+    v2 = math_round(sec_data_jq["close"][0].item(), 2)
     if math.isclose(v1, v2, abs_tol=1e-2) is False:
         logger.error("[close] not equal in db and jq: %f, %f", v1, v2)
         return False
 
     v1 = math_round(sec_data_db["high"], 2)
-    v2 = math_round(sec_data_jq["high"], 2)
+    v2 = math_round(sec_data_jq["high"][0].item(), 2)
     if math.isclose(v1, v2, abs_tol=1e-2) is False:
         logger.error("[high] not equal in db and jq: %f, %f", v1, v2)
         return False
 
     v1 = sec_data_db["volume"]
-    v2 = sec_data_jq["volume"]
+    v2 = sec_data_jq["volume"][0].item()
     if v1 != v2:
         logger.error("[volume] not equal in db and jq: %f, %f", v1, v2)
         return False
@@ -158,58 +207,33 @@ def _compare_sec_min_data(sec_data_db, sec_data_jq):
     return True
 
 
-def compare_bars_min_for_openclose(secs_in_db, data_in_db, data_in_jq, n_bars):
-    # influxdb取回的数据是f8，并且是rec.array的数组
-    # jq fetcher取回的数据是字典，key为股票代码，value是np.array，f4
-
-    # secs_in_db是抽选的股票，因此单向比较
-    secs_in_jq = set(data_in_jq.keys())
-    rc = _compare_secs(secs_in_db, secs_in_jq)
-    if not rc:
-        return False
-
-    db_data_by_sec = {}
-    for sec_data in data_in_db:
-        code = sec_data["code"]
-        if code in secs_in_db:
-            if code not in db_data_by_sec:
-                db_data_by_sec[code] = []
-            db_data_by_sec[code].append(sec_data)
-
-    for code in secs_in_db:
-        sec_data_jq = data_in_jq[code]
-        sec_data = db_data_by_sec[code]
-        # 比较240/48/16/8/4根线
-        for i in range(n_bars):
-            rc = _compare_sec_min_data(sec_data[i], sec_data_jq[i])
-            if not rc:
-                logger.error("code %s, failed to validate price", code)
-                return False
-
-    return True
-
-
 def _compare_sec_data_mW(sec_data_db, sec_data_jq):
     v1 = math_round(sec_data_db["open"], 2)
-    v2 = math_round(sec_data_jq["open"], 2)
+    v2 = math_round(sec_data_jq["open"][0].item(), 2)
     if math.isclose(v1, v2, abs_tol=1e-2) is False:
         logger.error("[open] not equal in db and jq: %f, %f", v1, v2)
         return False
 
-    v1 = math_round(sec_data_db["close"], 2)
-    v2 = math_round(sec_data_jq["close"], 2)
-    if math.isclose(v1, v2, abs_tol=1e-2) is False:
-        logger.error("[close] not equal in db and jq: %f, %f", v1, v2)
-        return False
-
     v1 = math_round(sec_data_db["high"], 2)
-    v2 = math_round(sec_data_jq["high"], 2)
+    v2 = math_round(sec_data_jq["high"][0].item(), 2)
     if math.isclose(v1, v2, abs_tol=1e-2) is False:
         logger.error("[high] not equal in db and jq: %f, %f", v1, v2)
         return False
 
+    v1 = math_round(sec_data_db["low"], 2)
+    v2 = math_round(sec_data_jq["low"][0].item(), 2)
+    if math.isclose(v1, v2, abs_tol=1e-2) is False:
+        logger.error("[low] not equal in db and jq: %f, %f", v1, v2)
+        return False
+
+    v1 = math_round(sec_data_db["close"], 2)
+    v2 = math_round(sec_data_jq["close"][0].item(), 2)
+    if math.isclose(v1, v2, abs_tol=1e-2) is False:
+        logger.error("[close] not equal in db and jq: %f, %f", v1, v2)
+        return False
+
     v1 = sec_data_db["volume"]
-    v2 = sec_data_jq["volume"]
+    v2 = sec_data_jq["volume"][0].item()
     if v1 != v2:
         logger.error("[volume] not equal in db and jq: %f, %f", v1, v2)
         return False

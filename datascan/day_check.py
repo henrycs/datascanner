@@ -1,23 +1,18 @@
 import datetime
 import logging
 
-import arrow
-import numpy as np
-from coretypes import FrameType
 from omicron.dal.cache import cache
 from omicron.dal.influx.flux import Flux
-from omicron.dal.influx.influxclient import InfluxClient
-from omicron.dal.influx.serialize import EPOCH, DataframeDeserializer
+from omicron.dal.influx.serialize import DataframeDeserializer
 from omicron.models.security import Security
-from omicron.models.timeframe import TimeFrame
 
+from datascan.index_secs import get_index_sec_whitelist
 from datascan.jq_fetcher import get_sec_bars_1d, get_sec_bars_pricelimits
 from datascan.scanner_utils import (
     compare_bars_for_openclose,
     compare_bars_for_pricelimits,
     get_secs_from_bars,
 )
-from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +26,7 @@ async def get_security_day_bars(start: datetime.datetime, end: datetime.datetime
         .measurement(measurement)
         .range(start, end)
         .bucket(client._bucket)
-        .fields(["open", "close", "volume", "factor"])
+        .fields(["open", "high", "low", "close", "volume", "factor"])
     )
 
     data = await client.query(flux)
@@ -40,7 +35,7 @@ async def get_security_day_bars(start: datetime.datetime, end: datetime.datetime
 
     ds = DataframeDeserializer(
         sort_values="_time",
-        usecols=["_time", "code", "open", "close", "volume", "factor"],
+        usecols=["_time", "code", "open", "high", "low", "close", "volume", "factor"],
         time_col="_time",
         engine="c",
     )
@@ -138,24 +133,38 @@ async def validate_day_bars(target_date: datetime.date, all_stock, all_index):
         return False
 
     # 对比详细数据
-    all_jq_secs_data1 = await get_sec_bars_1d(secs_list_1, target_date)
+    index_secs_whitelist = get_index_sec_whitelist()  # 只对比特定的指数
+    all_secs_in_jq = all_stock.union(all_index)
+    all_jq_secs_data1 = await get_sec_bars_1d(all_secs_in_jq, target_date)
     logger.info(
         "total secs downloaded from bars:1d/open@jq, %d, %s",
         len(all_jq_secs_data1),
         target_date,
     )
-    rc = compare_bars_for_openclose(secs_list_1, all_db_secs_data1, all_jq_secs_data1)
+    rc = compare_bars_for_openclose(
+        secs_list_1,
+        all_db_secs_data1,
+        all_jq_secs_data1,
+        all_index,
+        index_secs_whitelist,
+    )
     if not rc:
         logger.error("failed to compare sec data in db and jq, %s", target_date)
         return False
 
-    all_jq_secs_data2 = await get_sec_bars_pricelimits(secs_list_2, target_date)
+    all_jq_secs_data2 = await get_sec_bars_pricelimits(all_secs_in_jq, target_date)
     logger.info(
         "total secs downloaded from bars:1d/limits@jq, %d, %s",
         len(all_jq_secs_data2),
         target_date,
     )
-    rc = compare_bars_for_pricelimits(secs_list_2, all_db_secs_data2, all_jq_secs_data2)
+    rc = compare_bars_for_pricelimits(
+        secs_list_2,
+        all_db_secs_data2,
+        all_jq_secs_data2,
+        all_index,
+        index_secs_whitelist,
+    )
     if not rc:
         logger.error(
             "failed to compare sec data (price limit) in db and jq, %s", target_date
@@ -163,3 +172,12 @@ async def validate_day_bars(target_date: datetime.date, all_stock, all_index):
         return False
 
     return True
+
+
+async def get_all_secs_in_bars1d_db(target_date: datetime.date):
+    all_db_secs_data = await scan_bars_1d_for_seclist(target_date)
+    if all_db_secs_data is None or len(all_db_secs_data) == 0:
+        logger.error("failed to get sec list from db for bars:1d/open, %s", target_date)
+        return None
+
+    return get_secs_from_bars(all_db_secs_data)

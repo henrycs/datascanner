@@ -3,14 +3,12 @@ import logging
 import os
 
 import arrow
-from coretypes import FrameType
 from omicron.dal.cache import cache
 from omicron.models.timeframe import TimeFrame
 
 from download_bars.get_days import retrieve_bars_1d
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 from influx_data.security_list import get_security_list
-from rapidscan.fix_days import scan_bars_1d_for_seclist
 from rapidscan.fix_minutes import validate_bars_min
 from time_utils import check_running_conditions, split_securities
 
@@ -43,6 +41,8 @@ async def scanner_handler_day():
             target_day = TimeFrame.day_shift(target_day, 0)
         else:
             target_day = TimeFrame.day_shift(target_day, -1)  # cache记录的天数前推一天
+
+        target_day = datetime.date(2022, 7, 19)
         logger.info("fetchbars1d, from jq: %s", target_day)
 
         # 读取当天的证券列表
