@@ -90,9 +90,10 @@ class AbstractQuotesFetcher(QuotesFetcher):
         n_bars: int,
         frame_type: FrameType,
         include_unclosed=True,
+        fq_ref_enabled=True,
     ) -> Dict[str, np.ndarray]:
         return await cls.get_instance().get_bars_batch(
-            secs, end, n_bars, frame_type.value, include_unclosed
+            secs, end, n_bars, frame_type.value, include_unclosed, fq_ref_enabled
         )
 
     @classmethod

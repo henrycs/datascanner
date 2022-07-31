@@ -200,7 +200,7 @@ async def reverse_scanner_handler(scanning_type: int):
     # instance = None
 
     now = datetime.datetime.now()
-    now = datetime.datetime(2022, 7, 23, 11, 1, 0)
+    now = datetime.datetime(2022, 7, 31, 12, 1, 0)
     if TimeFrame.is_trade_day(now):
         logger.info("only scanning data in non-trade days: %s", now.date())
         return False
@@ -249,13 +249,13 @@ async def reverse_scanner_handler(scanning_type: int):
         days.sort()
         for _day in days:
             _day = TimeFrame.int2date(_day)
-            _day = datetime.date(2022, 7, 22)
+            _day = datetime.date(2022, 7, 25)
             logger.info("data scanning for: %s", _day)
 
             try:
                 rc = await validate_data_all(_day)
             except Exception as e:
-                logger.error("validate_data_all(%s) exception: %s", _day, e)
+                logger.error("validate_data_all(%s) exception: %s", _day, str(e))
                 rc = False
 
             rc = True

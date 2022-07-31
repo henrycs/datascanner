@@ -19,7 +19,9 @@ from data_fix.download_mins import redownload_bars_mins_for_target_day
 from data_fix.download_week import redownload_bars1w_for_target_day
 from datascan.validate_data_in_week import reverse_scanner_handler
 from download_bars.day_handler import scanner_handler_day
+from download_bars.week_handler import month_download_handler, week_download_handler
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
+from influx_tools import remove_allsecs_in_bars1d
 from rapidscan.main import get_cache_keyname
 from rebuild_minio.build_min_data import rebuild_minio_for_min
 
@@ -88,10 +90,13 @@ class Omega(object):
         key = get_cache_keyname(ft)
         start_str = await cache.sys.get(key)
         if start_str is None:
-            target_day = datetime.date(2022, 7, 16)
+            target_day = datetime.date(2022, 7, 30)
         else:
             target_day = arrow.get(start_str).date()
-        if target_day <= datetime.date(2005, 1, 4):
+
+        if ft == FrameType.WEEK and target_day <= datetime.date(2005, 1, 7):
+            return False
+        if ft == FrameType.MONTH and target_day <= datetime.date(2005, 1, 31):
             return False
 
         return True
@@ -109,24 +114,25 @@ class Omega(object):
 
         logger.info("<<< init %s process done", self.__class__.__name__)
 
-        # ft = FrameType.MIN5
-        # rc = await self.check_running_conditions(ft)
-        rc = True
+        ft = FrameType.WEEK
+        rc = await self.check_running_conditions(ft)
+        # rc = True
         if rc:
             await AbstractQuotesFetcher.create_instance(
                 self.fetcher_impl, **self.params
             )
 
             try:
-                # await drop_bars_1d()
+                # await remove_allsecs_in_bars1d(datetime.date(2022, 7, 25))
                 # await drop_bars_1w()
                 # await drop_bars_1M()
                 # await drop_bars_via_scope(target_year, FrameType.WEEK)
-                # return True
 
+                await week_download_handler()
+                # await month_download_handler()
                 # await scanner_handler_day()
                 # await scanner_handler_minutes(ft, False)
-                await reverse_scanner_handler(scanning_type=0)
+                # await reverse_scanner_handler(scanning_type=0)
                 # await redownload_bars1w_for_target_day()
                 # await redownload_bars1d_for_target_day()
                 # await redownload_bars_mins_for_target_day()

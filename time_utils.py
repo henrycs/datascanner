@@ -28,12 +28,14 @@ def split_securities(all_secs_in_cache):
 
 def get_cache_keyname(ft: FrameType):
     if ft in (
-        FrameType.DAY,
         FrameType.MIN1,
         FrameType.MIN5,
         FrameType.MIN15,
         FrameType.MIN30,
         FrameType.MIN60,
+        FrameType.DAY,
+        FrameType.WEEK,
+        FrameType.MONTH,
     ):
         return "datascan:cursor:%s" % ft.value
     else:

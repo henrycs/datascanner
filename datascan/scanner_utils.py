@@ -154,7 +154,6 @@ def compare_bars_for_pricelimits(
 
     secs_in_jq = set(_jq_data_dict.keys())
     rc = _compare_secs(secs_in_db, secs_in_jq)
-    rc = True
     if not rc:
         return False
 
@@ -257,7 +256,7 @@ def compare_bars_wM_for_openclose(secs_in_db, data_in_db, data_in_jq):
         rc = _compare_sec_data_mW(sec_data, sec_data_jq)
         if not rc:
             logger.error("code %s, failed to validate price", code)
-            return False
+            # return False
 
     return True
 

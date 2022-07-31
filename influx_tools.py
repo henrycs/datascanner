@@ -27,7 +27,7 @@ async def remove_security_list():
 async def drop_bars_1d():
     client = Security.get_influx_client()
     measurement = "stock_bars_1d"  # day
-    year = 2005
+    year = 2006
     while year < 2007:
         print("deleting in bars:1d ", year)
         await client.delete(measurement, datetime.datetime(year, 1, 1))
@@ -40,11 +40,11 @@ async def drop_bars_1d():
 async def drop_bars_1w():
     client = Security.get_influx_client()
     measurement = "stock_bars_1w"  # week
-    year = 2005
-    while year < 2007:
-        print("deleting in bars:1w ", year)
+    year = 2006
+    while year < 2024:
+        print("deleting in bars:1w ", year - 1)
         await client.delete(measurement, datetime.datetime(year, 1, 1))
-        print("data deleted in bars:1w, ", year)
+        print("data deleted in bars:1w, ", year - 1)
         year += 1
 
     print("drop_bars_1w: all finished.")
@@ -53,11 +53,11 @@ async def drop_bars_1w():
 async def drop_bars_1M():
     client = Security.get_influx_client()
     measurement = "stock_bars_1M"  # month
-    year = 2005
-    while year < 2007:
-        print("deleting in bars:1M ", year)
+    year = 2006
+    while year < 2024:
+        print("deleting in bars:1M ", year - 1)
         await client.delete(measurement, datetime.datetime(year, 1, 1))
-        print("data deleted in bars:1M, ", year)
+        print("data deleted in bars:1M, ", year - 1)
         year += 1
 
     print("drop_bars_1M: all finished.")
@@ -94,6 +94,17 @@ async def remove_sec_in_bars1d(code: str, target_date: datetime.date):
     client = Security.get_influx_client()
     measurement = "stock_bars_1d"
     await client.delete(measurement, stop=end, start=start_str, tags={"code": code})
+
+
+async def remove_allsecs_in_bars1d(target_date: datetime.date):
+    # 删除日线内所有数据
+    start = datetime.datetime.combine(target_date, datetime.time(0, 0, 0))
+    end = datetime.datetime.combine(target_date, datetime.time(23, 59, 59))
+    start_str = f"{start.isoformat(timespec='seconds')}Z"
+
+    client = Security.get_influx_client()
+    measurement = "stock_bars_1d"
+    await client.delete(measurement, stop=end, start=start_str)
 
 
 async def remove_sec_in_bars_min(code: str, target_date: datetime.date, ft: FrameType):

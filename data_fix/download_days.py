@@ -10,16 +10,19 @@ logger = logging.getLogger(__name__)
 
 
 async def redownload_bars1d_for_target_day():
-    target_day = datetime.date(2022, 7, 22)
+    target_day = datetime.date(2022, 7, 25)
     logger.info("fetchbars1d, from jq: %s", target_day)
 
     # 读取当天的证券列表
-    all_secs_in_cache = await get_security_list(target_day)
-    if all_secs_in_cache is None:
+    all_secs = await get_security_list(target_day, "stock")
+    if all_secs is None:
+        logger.error("no security list in date %s", target_day)
+        return False
+    all_indexes = await get_security_list(target_day, "index")
+    if all_indexes is None:
         logger.error("no security list in date %s", target_day)
         return False
 
-    all_secs, all_indexes = split_securities(all_secs_in_cache)
     if len(all_secs) == 0 or len(all_indexes) == 0:
         logger.error("no stock or index list in date %s", target_day)
         return False

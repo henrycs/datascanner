@@ -17,20 +17,6 @@ from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 logger = logging.getLogger(__name__)
 
 
-def split_securities_by_type(all_secs_in_cache):
-    all_secs = set()
-    all_indexes = set()
-    for sec in all_secs_in_cache:
-        code = sec["code"]
-        _type = sec["type"]
-        if _type == "stock":
-            all_secs.add(code)
-        elif _type == "index":
-            all_indexes.add(code)
-
-    return all_secs, all_indexes
-
-
 def split_securities_by_type_nparray(all_secs_in_cache):
     all_secs = set()
     all_indexes = set()
@@ -45,15 +31,13 @@ def split_securities_by_type_nparray(all_secs_in_cache):
     return all_secs, all_indexes
 
 
-async def get_security_list_db(target_date: datetime.date):
-    all_secs_in_cache = (
-        await Security.select(target_date).types(["stock", "index"]).eval()
-    )
+async def get_security_list_db(target_date: datetime.date, sec_type: str):
+    all_secs_in_cache = await Security.select(target_date).types([sec_type]).eval()
     if all_secs_in_cache is None or len(all_secs_in_cache) < 100:
         logger.error("failed to query securities from db, %s", target_date)
         return None
 
-    return all_secs_in_cache
+    return set(all_secs_in_cache)
 
 
 async def get_security_list_jq(target_date: datetime.date):
@@ -70,10 +54,12 @@ async def get_security_list_jq(target_date: datetime.date):
 
 async def validate_security_list(target_date: datetime.date):
     # 从数据库中读取当天的证券列表
-    all_secs_in_cache = await get_security_list_db(target_date)
-    if all_secs_in_cache is None:
+    all_stock_db = await get_security_list_db(target_date, "stock")
+    if all_stock_db is None:
         return None, None
-    all_stock_db, all_index_db = split_securities_by_type(all_secs_in_cache)
+    all_index_db = await get_security_list_db(target_date, "index")
+    if all_index_db is None:
+        return None, None
 
     all_secs_in_jq = await get_security_list_jq(target_date)
     if all_secs_in_jq is None:

@@ -31,7 +31,7 @@ async def get_security_month_bars(start: datetime.datetime, end: datetime.dateti
         .measurement(measurement)
         .range(start, end)
         .bucket(client._bucket)
-        .fields(["open", "close", "high", "volume"])
+        .fields(["open", "high", "low", "close", "volume"])
     )
 
     data = await client.query(flux)
@@ -40,7 +40,7 @@ async def get_security_month_bars(start: datetime.datetime, end: datetime.dateti
 
     ds = DataframeDeserializer(
         sort_values="_time",
-        usecols=["_time", "code", "open", "close", "high", "volume"],
+        usecols=["_time", "code", "open", "high", "low", "close", "volume"],
         time_col="_time",
         engine="c",
     )

@@ -74,12 +74,15 @@ async def retrieve_bars_1w(target_day, all_secs, all_indexes):
     logger.info("first and last day of week: %s, %s", w1d0, target_day)
 
     if w1d0 != target_day:
-        all_secs_in_w1d = await get_security_list(w1d0)
-        if all_secs_in_w1d is None:
+        all_secs_0 = await get_security_list(w1d0, "stock")
+        if all_secs_0 is None:
+            logger.error("no security list in date %s", w1d0)
+            return False
+        all_indexes_0 = await get_security_list(w1d0, "index")
+        if all_indexes_0 is None:
             logger.error("no security list in date %s", w1d0)
             return False
 
-        all_secs_0, all_indexes_0 = split_securities(all_secs_in_w1d)
         if len(all_secs_0) == 0 or len(all_indexes_0) == 0:
             logger.error("no stock or index list in date %s", w1d0)
             return False
@@ -147,12 +150,16 @@ async def retrieve_bars_month(target_day, all_secs, all_indexes):
     print("first and last day of month: ", m1d0, target_day)
 
     if m1d0 != target_day:
-        all_secs_in_w1d = await get_security_list(m1d0)
-        if all_secs_in_w1d is None:
+        all_secs_0 = await get_security_list(m1d0, "stock")
+        if all_secs_0 is None:
             logger.error("no security list in date %s", m1d0)
             return False
 
-        all_secs_0, all_indexes_0 = split_securities(all_secs_in_w1d)
+        all_indexes_0 = await get_security_list(m1d0, "index")
+        if all_indexes_0 is None:
+            logger.error("no security list in date %s", m1d0)
+            return False
+
         if len(all_secs_0) == 0 or len(all_indexes_0) == 0:
             logger.error("no stock or index list in date %s", m1d0)
             return False

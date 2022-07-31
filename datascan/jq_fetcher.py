@@ -160,7 +160,7 @@ async def get_sec_bars_1w(secs_set: set, dt: datetime.date, d0: datetime.date):
 
         _sec_list = secs[start:end]
         bars = await instance.get_bars_batch(
-            _sec_list, end_dt, 1, "1w", include_unclosed=True
+            _sec_list, end_dt, 1, "1w", include_unclosed=True, fq_ref_enabled=False
         )
         for code in list(bars.keys()):
             if not len(bars[code]):
@@ -210,7 +210,7 @@ async def get_sec_bars_1M(secs_set: set, dt: datetime.date, d0: datetime.date):
 
         _sec_list = secs[start:end]
         bars = await instance.get_bars_batch(
-            _sec_list, end_dt, 1, "1M", include_unclosed=True
+            _sec_list, end_dt, 1, "1M", include_unclosed=True, fq_ref_enabled=False
         )
         for code in list(bars.keys()):
             if not len(bars[code]):
