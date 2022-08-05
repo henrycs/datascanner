@@ -21,7 +21,7 @@ from datascan.validate_data_in_week import reverse_scanner_handler
 from download_bars.day_handler import scanner_handler_day
 from download_bars.week_handler import month_download_handler, week_download_handler
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
-from influx_tools import remove_allsecs_in_bars1d
+from influx_tools import drop_bars_1M, remove_allsecs_in_bars1d
 from rapidscan.main import get_cache_keyname
 from rebuild_minio.build_min_data import rebuild_minio_for_min
 
@@ -75,22 +75,19 @@ class Omega(object):
         self.params = kwargs
 
     async def check_running_conditions(self, ft):
-        dt1 = datetime.time(3, 0, 0)
-        dt2 = datetime.time(8, 0, 0)
-        dt3 = datetime.time(15, 30, 0)
+        dt1 = datetime.time(2, 0, 0)
+        dt2 = datetime.time(3, 30, 0)
 
         now = datetime.datetime.now()
         nowtime = now.time()
 
-        if nowtime < dt1:  # 3点前有其他任务
-            return False
-        if nowtime > dt2 and nowtime < dt3:  # 交易时间段不执行
+        if nowtime > dt1 and nowtime < dt2:
             return False
 
         key = get_cache_keyname(ft)
         start_str = await cache.sys.get(key)
         if start_str is None:
-            target_day = datetime.date(2022, 7, 30)
+            target_day = datetime.date(2022, 8, 6)
         else:
             target_day = arrow.get(start_str).date()
 
@@ -128,14 +125,17 @@ class Omega(object):
                 # await drop_bars_1M()
                 # await drop_bars_via_scope(target_year, FrameType.WEEK)
 
-                await week_download_handler()
-                # await month_download_handler()
+                # await week_download_handler()
+                await month_download_handler()
+
                 # await scanner_handler_day()
                 # await scanner_handler_minutes(ft, False)
                 # await reverse_scanner_handler(scanning_type=0)
+
                 # await redownload_bars1w_for_target_day()
                 # await redownload_bars1d_for_target_day()
                 # await redownload_bars_mins_for_target_day()
+
                 # await rebuild_minio_for_min()
             except Exception as e:
                 logger.info("failed to execution: %s", e)

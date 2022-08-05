@@ -20,7 +20,7 @@ async def week_download_handler():
     key = get_cache_keyname(ft)
     start_str = await cache.sys.get(key)
     if start_str is None:
-        target_day = datetime.date(2022, 7, 30)
+        target_day = datetime.date(2022, 8, 6)
     else:
         target_day = arrow.get(start_str).date()
 
@@ -55,15 +55,15 @@ async def week_download_handler():
             logger.error("no stock or index list in date %s", target_day)
             return False
 
-        # rc = await retrieve_bars_1w(target_day, all_secs, all_indexes)
-        rc = True
+        rc = await retrieve_bars_1w(target_day, all_secs, all_indexes)
+        # rc = True
         if rc is False:
             logger.error("failed to get bars:1w for date %s", target_day)
             return False
 
         # save timestamp
         await cache.sys.set(key, target_day.strftime("%Y-%m-%d"))
-        input("next week day...")
+        # input("next week day...")
 
     return True
 
@@ -74,7 +74,7 @@ async def month_download_handler():
     key = get_cache_keyname(ft)
     start_str = await cache.sys.get(key)
     if start_str is None:
-        target_day = datetime.date(2022, 7, 31)
+        target_day = datetime.date(2022, 8, 6)
     else:
         target_day = arrow.get(start_str).date()
 
@@ -109,14 +109,14 @@ async def month_download_handler():
             logger.error("no stock or index list in date %s", target_day)
             return False
 
-        # rc = await retrieve_bars_month(target_day, all_secs, all_indexes)
-        rc = True
+        rc = await retrieve_bars_month(target_day, all_secs, all_indexes)
+        # rc = True
         if rc is False:
             logger.error("failed to get bars:1w for date %s", target_day)
             return False
 
         # save timestamp
         await cache.sys.set(key, target_day.strftime("%Y-%m-%d"))
-        input("next month day...")
+        # input("next month day...")
 
     return True

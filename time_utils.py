@@ -43,17 +43,25 @@ def get_cache_keyname(ft: FrameType):
 
 
 async def check_running_conditions(instance):
-    dt1 = datetime.time(3, 0, 0)
-    dt2 = datetime.time(8, 0, 0)
-    dt3 = datetime.time(17, 10, 0)
+    # 周六需要取数据
+    dt1 = datetime.time(2, 0, 0)
+    dt2 = datetime.time(3, 30, 0)
+    # 仅限周六取数据
+    dt3 = datetime.time(8, 0, 0)
+    dt4 = datetime.time(9, 32, 0)
 
     now = datetime.datetime.now()
-    # now = datetime.datetime(2022, 7, 15, 18, 1, 0)
     nowtime = now.time()
 
     quota = await instance.get_quota()
     # quota = {"spare": 5000000}
     logger.info("current quota: %d", quota["spare"])
+
+    # in trade day and saturday
+    if nowtime > dt1 and nowtime < dt2:
+        return False
+    if nowtime > dt3 and nowtime < dt4:
+        return False
 
     if not TimeFrame.is_trade_day(now):
         if quota["spare"] < 10 * 10000:
@@ -61,14 +69,8 @@ async def check_running_conditions(instance):
             return False
         return True
 
-    # in trade day
-    if nowtime < dt1:  # 3点前有其他任务
-        return False
-    if nowtime > dt2 and nowtime < dt3:  # 交易时间段不执行
-        return False
-
     # 工作日需要保留400万给白天使用（实际需要256万）
-    if nowtime < dt2:
+    if nowtime < dt4:
         if quota["spare"] < 400 * 10000:
             logger.error("quota less than 4,000,000, break...")
             return False
