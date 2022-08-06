@@ -33,7 +33,7 @@ def split_securities_by_type_nparray(all_secs_in_cache):
 
 async def get_security_list_db(target_date: datetime.date, sec_type: str):
     all_secs_in_cache = await Security.select(target_date).types([sec_type]).eval()
-    if all_secs_in_cache is None or len(all_secs_in_cache) < 100:
+    if all_secs_in_cache is None or len(all_secs_in_cache) < 10:
         logger.error("failed to query securities from db, %s", target_date)
         return None
 
@@ -44,7 +44,7 @@ async def get_security_list_jq(target_date: datetime.date):
     fetcher = AbstractQuotesFetcher.get_instance()
 
     all_secs = await fetcher.get_security_list(target_date)
-    if all_secs is None or len(all_secs) < 100:
+    if all_secs is None or len(all_secs) < 10:
         msg = "failed to get security list(%s)" % target_date.strftime("%Y-%m-%d")
         logger.error(msg)
         return None

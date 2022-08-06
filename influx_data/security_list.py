@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 async def get_security_list(target_date: datetime.date, sec_type: str):
     all_secs_in_cache = await Security.select(target_date).types([sec_type]).eval()
-    if all_secs_in_cache is None or len(all_secs_in_cache) < 100:
+    if all_secs_in_cache is None or len(all_secs_in_cache) < 10:
         print("failed to query securities from db")
         return None
 
