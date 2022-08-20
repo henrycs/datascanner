@@ -200,7 +200,7 @@ async def reverse_scanner_handler(scanning_type: int):
     # instance = None
 
     now = datetime.datetime.now()
-    now = datetime.datetime(2022, 8, 6, 12, 1, 0)
+    # now = datetime.datetime(2022, 8, 6, 12, 1, 0)
     if TimeFrame.is_trade_day(now):
         logger.info("only scanning data in non-trade days: %s", now.date())
         return False
@@ -217,7 +217,7 @@ async def reverse_scanner_handler(scanning_type: int):
         _week_day = None  # force skip
         if _week_day:
             try:
-                # _week_day = datetime.date(2022, 7, 29)  # debug
+                # _week_day = datetime.date(2022, 8, 19)  # debug
                 logger.info("data scanning for week: %s", _week_day)
                 await validate_data_bars1w(_week_day)
                 await update_scanned_week_day(_week_day)
@@ -251,7 +251,7 @@ async def reverse_scanner_handler(scanning_type: int):
         days.sort()
         for _day in days:
             _day = TimeFrame.int2date(_day)
-            _day = datetime.date(2022, 7, 25)  # manual scan
+            _day = datetime.date(2022, 8, 15)  # manual scan
             logger.info("data scanning for: %s", _day)
 
             try:

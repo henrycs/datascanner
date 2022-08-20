@@ -87,7 +87,7 @@ class Omega(object):
         key = get_cache_keyname(ft)
         start_str = await cache.sys.get(key)
         if start_str is None:
-            target_day = datetime.date(2022, 8, 6)
+            target_day = datetime.date(2022, 8, 20)
         else:
             target_day = arrow.get(start_str).date()
 
@@ -120,7 +120,7 @@ class Omega(object):
             )
 
             try:
-                # await remove_allsecs_in_bars1d(datetime.date(2022, 7, 25))
+                # await remove_allsecs_in_bars1d(datetime.date(2022, 8, 15))
                 # await drop_bars_1w()
                 # await drop_bars_1M()
                 # await drop_bars_via_scope(target_year, FrameType.WEEK)
