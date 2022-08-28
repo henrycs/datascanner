@@ -12,6 +12,7 @@ from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame
 from omicron.models.timeframe import TimeFrame as tf
 
+from datascan.index_secs import get_index_sec_whitelist
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 
 logger = logging.getLogger(__name__)
@@ -83,7 +84,13 @@ async def validate_security_list(target_date: datetime.date):
         return None, None
     delta = all_index_jq.difference(all_index_db)
     if len(delta) > 0:
-        logger.error("%d security(index) not in local db, %s", len(delta), target_date)
-        return None, None
+        logger.info("index in jq but not in db: %s", delta)
+        if delta in get_index_sec_whitelist():
+            logger.error(
+                "%d important security(index) not in local db, %s",
+                len(delta),
+                target_date,
+            )
+            return None, None
 
     return all_stock_db, all_index_db

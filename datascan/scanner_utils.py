@@ -10,6 +10,8 @@ from omicron.extensions.decimals import math_round
 from omicron.models.security import Security
 from omicron.models.timeframe import TimeFrame
 
+from datascan.index_secs import get_index_sec_whitelist
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,9 +34,10 @@ def _compare_secs(secs_in_db, secs_in_jq):
 
     y1 = secs_in_jq.difference(secs_in_db)
     if len(y1) > 0:  # 本地数据库中多余的股票或指数
-        logger.error("secs in jq but not in bars:1d, %d", len(y1))
-        logger.info(y1)
-        return False
+        logger.error("secs in jq but not in bars:1d, %s", y1)
+        if y1 in get_index_sec_whitelist():
+            logger.error("important index missing....")
+            return False
 
     return True
 
@@ -248,7 +251,8 @@ def compare_bars_wM_for_openclose(secs_in_db, data_in_db, data_in_jq):
     secs_in_jq = set(data_in_jq.keys())
     rc = _compare_secs(secs_in_db, secs_in_jq)
     if not rc:
-        return False
+        logger.error("continue to compare data...")
+        # return False
 
     for sec_data in data_in_db:
         code = sec_data["code"]
