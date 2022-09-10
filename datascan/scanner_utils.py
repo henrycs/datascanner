@@ -28,9 +28,12 @@ def _compare_secs(secs_in_db, secs_in_jq):
     # 检查是否有多余的股票
     x1 = secs_in_db.difference(secs_in_jq)
     if len(x1) > 0:  # 本地数据库中多余的股票或指数
-        logger.error("secs in bars:1d but not in jq, %d", len(x1))
-        logger.info(x1)
-        return False
+        if "000985.XSHG" in x1:
+            logger.info("skip index 000985.XSHG...")
+        else:
+            logger.error("secs in bars:1d but not in jq, %d", len(x1))
+            logger.info(x1)
+            return False
 
     y1 = secs_in_jq.difference(secs_in_db)
     if len(y1) > 0:  # 本地数据库中多余的股票或指数

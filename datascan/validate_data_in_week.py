@@ -214,10 +214,10 @@ async def reverse_scanner_handler(scanning_type: int):
 
         # 周线和月线检查，通过读取cache中的时间记录，判断是否需要执行
         _week_day = await get_next_scanning_week_day(now.date())
-        # _week_day = None  # force skip
+        _week_day = None  # force skip
         if _week_day:
             try:
-                # _week_day = datetime.date(2022, 8, 26)  # debug
+                _week_day = datetime.date(2022, 9, 9)  # debug
                 logger.info("data scanning for week: %s", _week_day)
                 await validate_data_bars1w(_week_day)
                 await update_scanned_week_day(_week_day)
@@ -251,7 +251,7 @@ async def reverse_scanner_handler(scanning_type: int):
         days.sort()
         for _day in days:
             _day = TimeFrame.int2date(_day)
-            _day = datetime.date(2022, 8, 26)  # manual scan
+            _day = datetime.date(2022, 9, 9)  # manual scan
             logger.info("data scanning for: %s", _day)
 
             try:

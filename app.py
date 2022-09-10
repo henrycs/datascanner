@@ -87,7 +87,7 @@ class Omega(object):
         key = get_cache_keyname(ft)
         start_str = await cache.sys.get(key)
         if start_str is None:
-            target_day = datetime.date(2022, 8, 28)
+            target_day = datetime.date(2022, 9, 10)
         else:
             target_day = arrow.get(start_str).date()
 

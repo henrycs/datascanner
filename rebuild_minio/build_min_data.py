@@ -147,10 +147,8 @@ async def get_sec_minutes_data_db(ft: FrameType, target_date: datetime.date):
 
 async def generate_minio_for_min(target_date: datetime.date, ft: FrameType):
     # 从数据库中读取当天的证券列表
-    all_secs_in_cache = await get_security_list(target_date)
-    if all_secs_in_cache is None:
-        return False
-    all_stock_db, all_index_db = split_securities_by_type(all_secs_in_cache)
+    all_stock_db = await get_security_list(target_date, "stock")
+    all_index_db = await get_security_list(target_date, "index")
     logger.info("stock secs: %d, index secs: %d", len(all_stock_db), len(all_index_db))
 
     secs_data = await get_sec_minutes_data_db(ft, target_date)

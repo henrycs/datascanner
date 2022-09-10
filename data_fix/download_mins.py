@@ -54,10 +54,10 @@ async def get_min_data_from_jq(
 
 
 async def redownload_bars_mins_for_target_day():
-    target_day = datetime.date(2022, 7, 22)
+    target_day = datetime.date(2022, 9, 1)
     logger.info("fetchbars, mins, from jq: %s", target_day)
 
-    all_stocks = {"688375.XSHG", "688231.XSHG"}
+    all_stocks = {"688162.XSHG", "301149.XSHE", "003033.XSHE", "301128.XSHE"}
     all_indexes = set()
 
     for ft in (
