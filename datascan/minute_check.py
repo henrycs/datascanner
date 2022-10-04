@@ -35,7 +35,7 @@ async def get_seclist_from_minutes_data_db(ft: FrameType, target_date: datetime.
 async def get_security_minutes_bars(
     ft: FrameType, start: datetime.datetime, end: datetime.datetime
 ):
-    client = Security.get_influx_client()
+    client = Security._get_influx_client()
     measurement = "stock_bars_%s" % ft.value
 
     flux = (

@@ -60,7 +60,7 @@ async def get_sec_bars_min(secs_set: set, dt: datetime.date, ft: FrameType):
                 del bars[code]
                 print("delete bar with nan amount/volume: ", code)
                 continue
-            _date_in_bar = bars[code]["frame"][0]
+            _date_in_bar = bars[code]["frame"][0].item()
             if _date_in_bar.date() != dt:
                 del bars[code]
                 logger.info(
@@ -110,7 +110,7 @@ async def get_sec_bars_1d(secs_set: set, dt: datetime.date):
                 del bars[code]
                 print("delete bar with nan amount/volume: ", code)
                 continue
-            _date_in_bar = bars[code]["frame"][0]
+            _date_in_bar = bars[code]["frame"][0].item().date()
             if _date_in_bar != dt:
                 del bars[code]
                 logger.info(
@@ -173,7 +173,7 @@ async def get_sec_bars_1w(secs_set: set, dt: datetime.date, d0: datetime.date):
                 del bars[code]
                 print("delete bar with nan amount/volume: ", code)
                 continue
-            _date_in_bar = bars[code]["frame"][0]
+            _date_in_bar = bars[code]["frame"][0].item().date()
             if _date_in_bar < d0 or _date_in_bar > dt:
                 del bars[code]
                 logger.info(
@@ -223,7 +223,7 @@ async def get_sec_bars_1M(secs_set: set, dt: datetime.date, d0: datetime.date):
                 del bars[code]
                 print("delete bar with nan amount/volume: ", code)
                 continue
-            _date_in_bar = bars[code]["frame"][0]
+            _date_in_bar = bars[code]["frame"][0].item().date()
             if _date_in_bar < d0 or _date_in_bar > dt:
                 del bars[code]
                 logger.info(

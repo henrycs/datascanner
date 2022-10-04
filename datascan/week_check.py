@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 async def get_security_week_bars(start: datetime.datetime, end: datetime.datetime):
-    client = Security.get_influx_client()
+    client = Security._get_influx_client()
     measurement = "stock_bars_1w"
 
     flux = (

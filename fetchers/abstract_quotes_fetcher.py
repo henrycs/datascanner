@@ -8,9 +8,6 @@ from typing import Dict, List, Optional, Union
 import cfg4py
 import numpy as np
 from coretypes import Frame, FrameType
-from numpy.lib import recfunctions as rfn
-from omicron.models.funds import FundNetValue, FundPortfolioStock, Funds, FundShareDaily
-from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame
 
 from fetchers.quotes_fetcher import QuotesFetcher

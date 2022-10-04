@@ -74,30 +74,6 @@ class Omega(object):
         self.fetcher_impl = fetcher_impl
         self.params = kwargs
 
-    async def check_running_conditions(self, ft):
-        dt1 = datetime.time(2, 0, 0)
-        dt2 = datetime.time(3, 30, 0)
-
-        now = datetime.datetime.now()
-        nowtime = now.time()
-
-        if nowtime > dt1 and nowtime < dt2:
-            return False
-
-        key = get_cache_keyname(ft)
-        start_str = await cache.sys.get(key)
-        if start_str is None:
-            target_day = datetime.date(2022, 9, 18)
-        else:
-            target_day = arrow.get(start_str).date()
-
-        if ft == FrameType.WEEK and target_day <= datetime.date(2005, 1, 7):
-            return False
-        if ft == FrameType.MONTH and target_day <= datetime.date(2005, 1, 31):
-            return False
-
-        return True
-
     async def init(self, *args):
         logger.info("init %s", self.__class__.__name__)
 
@@ -111,38 +87,31 @@ class Omega(object):
 
         logger.info("<<< init %s process done", self.__class__.__name__)
 
-        ft = FrameType.WEEK
-        rc = await self.check_running_conditions(ft)
-        # rc = True
-        if rc:
-            await AbstractQuotesFetcher.create_instance(
-                self.fetcher_impl, **self.params
-            )
+        await AbstractQuotesFetcher.create_instance(self.fetcher_impl, **self.params)
 
-            try:
-                # await remove_allsecs_in_bars1d(datetime.date(2022, 8, 15))
-                # await drop_bars_1w()
-                # await drop_bars_1M()
-                # await drop_bars_via_scope(target_year, FrameType.WEEK)
+        try:
+            # await remove_allsecs_in_bars1d(datetime.date(2022, 8, 15))
+            # await drop_bars_1w()
+            # await drop_bars_1M()
+            # await drop_bars_via_scope(target_year, FrameType.WEEK)
 
-                # await week_download_handler()
-                # await month_download_handler()
+            # await week_download_handler()
+            # await month_download_handler()
 
-                # await scanner_handler_day()
-                # await scanner_handler_minutes(ft, False)
-                await reverse_scanner_handler(scanning_type=0)
+            # await scanner_handler_day()
+            # await scanner_handler_minutes(ft, False)
+            await reverse_scanner_handler(scanning_type=0)
 
-                # await redownload_bars1w_for_target_day()
-                # await redownload_bars1d_for_target_day()
-                # await redownload_bars_mins_for_target_day()
+            # await redownload_bars1w_for_target_day()
+            # await redownload_bars1d_for_target_day()
+            # await redownload_bars_mins_for_target_day()
 
-                # await rebuild_minio_for_min()
-            except Exception as e:
-                logger.info("failed to execution: %s", e)
-                return False
+            # await rebuild_minio_for_min()
+        except Exception as e:
+            logger.info("failed to execution: %s", e)
+            return False
 
-            logger.info("all tasks finished.")
-
+        logger.info("all tasks finished.")
         await omicron.close()
 
 
