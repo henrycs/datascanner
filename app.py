@@ -22,6 +22,7 @@ from download_bars.day_handler import scanner_handler_day
 from download_bars.week_handler import month_download_handler, week_download_handler
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 from influx_tools import drop_bars_1M, remove_allsecs_in_bars1d
+from pricestats.sum_history import sum_price_stats
 from rapidscan.main import get_cache_keyname
 from rebuild_minio.build_min_data import rebuild_minio_for_min
 
@@ -100,7 +101,8 @@ class Omega(object):
 
             # await scanner_handler_day()
             # await scanner_handler_minutes(ft, False)
-            await reverse_scanner_handler(scanning_type=0)
+            # await reverse_scanner_handler(scanning_type=0)
+            await sum_price_stats()
 
             # await redownload_bars1w_for_target_day()
             # await redownload_bars1d_for_target_day()
@@ -108,6 +110,7 @@ class Omega(object):
 
             # await rebuild_minio_for_min()
         except Exception as e:
+            logger.exception(e)
             logger.info("failed to execution: %s", e)
             return False
 
