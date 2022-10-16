@@ -101,8 +101,8 @@ class Omega(object):
 
             # await scanner_handler_day()
             # await scanner_handler_minutes(ft, False)
-            # await reverse_scanner_handler(scanning_type=0)
-            await sum_price_stats()
+            await reverse_scanner_handler(scanning_type=0)
+            # await sum_price_stats()
 
             # await redownload_bars1w_for_target_day()
             # await redownload_bars1d_for_target_day()
