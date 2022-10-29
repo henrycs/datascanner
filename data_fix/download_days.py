@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 async def redownload_bars1d_for_target_day():
-    target_day = datetime.date(2022, 9, 1)
+    target_day = datetime.date(2022, 10, 27)
     logger.info("fetchbars1d, from jq: %s", target_day)
 
     # 读取当天的证券列表

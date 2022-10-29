@@ -68,7 +68,7 @@ async def get_1d_for_pricelimits(
         )
         return False
 
-    await Stock.save_trade_price_limits(all_secs_data, None, to_cache=False)
+    await Stock.save_trade_price_limits(all_secs_data, to_cache=False)
     logger.info(
         "get from bars:1d:limits@jq and saved into db, %s, %d",
         FrameType.DAY,
