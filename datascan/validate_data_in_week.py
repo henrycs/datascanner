@@ -217,7 +217,7 @@ async def reverse_scanner_handler(scanning_type: int):
         _week_day = None  # force skip
         if _week_day:
             try:
-                _week_day = datetime.date(2022, 10, 28)  # debug
+                _week_day = datetime.date(2022, 11, 4)
                 logger.info("data scanning for week: %s", _week_day)
                 await validate_data_bars1w(_week_day)
                 await update_scanned_week_day(_week_day)
@@ -233,7 +233,7 @@ async def reverse_scanner_handler(scanning_type: int):
                 logger.info("data scanning for month: %s", _month_day)
                 await validate_data_bars1M(_month_day)
                 await update_scanned_month_day(_month_day)
-                # break
+                break
             except Exception as e:
                 logger.error("validate_data_all(%s) exception: %s", _month_day, e)
                 rc = False
@@ -251,7 +251,7 @@ async def reverse_scanner_handler(scanning_type: int):
         days.sort()
         for _day in days:
             _day = TimeFrame.int2date(_day)
-            _day = datetime.date(2022, 10, 28)  # manual scan
+            _day = datetime.date(2022, 11, 4)  # manual scan
             logger.info("data scanning for: %s", _day)
 
             try:
