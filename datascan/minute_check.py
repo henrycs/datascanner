@@ -32,6 +32,50 @@ async def get_seclist_from_minutes_data_db(ft: FrameType, target_date: datetime.
     return secs
 
 
+my_bars_dtype = np.dtype(
+    [
+        # use datetime64 may improve performance/memory usage, but it's hard to talk with other modules, like TimeFrame
+        ("_time", "datetime64[s]"),
+        ("code", "O"),
+        ("open", "f4"),
+        ("high", "f4"),
+        ("low", "f4"),
+        ("close", "f4"),
+        ("volume", "f8"),
+    ]
+)
+
+
+async def get_security_minutes_bars_bysecs(
+    sec_list, ft: FrameType, start: datetime.datetime, end: datetime.datetime
+):
+    client = Security._get_influx_client()
+    measurement = "stock_bars_%s" % ft.value
+
+    flux = (
+        Flux()
+        .measurement(measurement)
+        .range(start, end)
+        .bucket(client._bucket)
+        .fields(["open", "high", "low", "close", "volume"])
+        .tags({"code": sec_list})
+    )
+
+    data = await client.query(flux)
+    if len(data) == 2:  # \r\n
+        return []
+
+    ds = DataframeDeserializer(
+        sort_values="_time",
+        usecols=["_time", "code", "open", "high", "low", "close", "volume"],
+        time_col="_time",
+        engine="c",
+    )
+    actual = ds(data)
+    secs = actual.to_records(index=False).astype(my_bars_dtype)
+    return secs
+
+
 async def get_security_minutes_bars(
     ft: FrameType, start: datetime.datetime, end: datetime.datetime
 ):
