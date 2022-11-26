@@ -5,6 +5,7 @@ from omicron.dal.cache import cache
 from omicron.dal.influx.flux import Flux
 from omicron.dal.influx.serialize import DataframeDeserializer
 from omicron.models.security import Security
+from omicron.models import get_influx_client
 
 from datascan.index_secs import get_index_sec_whitelist
 from datascan.jq_fetcher import get_sec_bars_1d, get_sec_bars_pricelimits
@@ -18,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 async def get_security_day_bars(start: datetime.datetime, end: datetime.datetime):
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_1d"
 
     flux = (
@@ -45,7 +46,7 @@ async def get_security_day_bars(start: datetime.datetime, end: datetime.datetime
 
 
 async def get_security_price_limits(start: datetime.datetime, end: datetime.datetime):
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_1d"
 
     flux = (

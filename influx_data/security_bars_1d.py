@@ -6,6 +6,7 @@ from coretypes import FrameType, bars_dtype
 from omicron.dal.influx.flux import Flux
 from omicron.dal.influx.influxclient import InfluxClient
 from omicron.dal.influx.serialize import EPOCH, DataframeDeserializer
+from omicron.models import get_influx_client
 from omicron.models.security import Security
 from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 async def get_security_day_bars(start: datetime.datetime, end: datetime.datetime):
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_1d"
 
     flux = (
@@ -42,7 +43,7 @@ async def get_security_day_bars(start: datetime.datetime, end: datetime.datetime
 
 
 async def get_security_price_limits(start: datetime.datetime, end: datetime.datetime):
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_1d"
 
     flux = (

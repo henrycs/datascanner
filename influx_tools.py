@@ -9,12 +9,13 @@ from omicron.dal.influx.serialize import EPOCH, DataframeDeserializer
 from omicron.models.security import Security
 from omicron.models.timeframe import TimeFrame
 from omicron.models.timeframe import TimeFrame as tf
+from omicron.models import get_influx_client
 
 logger = logging.getLogger(__name__)
 
 
 async def remove_security_list():
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "security_list"
     year = 2007
     while year < 2024:
@@ -25,7 +26,7 @@ async def remove_security_list():
 
 
 async def drop_bars_1d():
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_1d"  # day
     year = 2006
     while year < 2007:
@@ -38,7 +39,7 @@ async def drop_bars_1d():
 
 
 async def drop_bars_1w():
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_1w"  # week
     year = 2006
     while year < 2024:
@@ -51,7 +52,7 @@ async def drop_bars_1w():
 
 
 async def drop_bars_1M():
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_1M"  # month
     year = 2006
     while year < 2024:
@@ -73,7 +74,7 @@ async def drop_bars_via_scope(target_year, ft: FrameType):
     else:
         return False
 
-    client = Security._get_influx_client()
+    client = get_influx_client()
     start = datetime.datetime(target_year, 1, 1)
     end = datetime.datetime(target_year, 12, 31, 23, 59, 59)
     start_str = f"{start.isoformat(timespec='seconds')}Z"
@@ -91,7 +92,7 @@ async def remove_sec_in_bars1d(code: str, target_date: datetime.date):
     end = datetime.datetime.combine(target_date, datetime.time(23, 59, 59))
     start_str = f"{start.isoformat(timespec='seconds')}Z"
 
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_1d"
     await client.delete(measurement, stop=end, start=start_str, tags={"code": code})
 
@@ -102,7 +103,7 @@ async def remove_allsecs_in_bars1d(target_date: datetime.date):
     end = datetime.datetime.combine(target_date, datetime.time(23, 59, 59))
     start_str = f"{start.isoformat(timespec='seconds')}Z"
 
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_1d"
     await client.delete(measurement, stop=end, start=start_str)
 
@@ -113,7 +114,7 @@ async def remove_sec_in_bars_min(code: str, target_date: datetime.date, ft: Fram
     end = datetime.datetime.combine(target_date, datetime.time(23, 59, 59))
     start_str = f"{start.isoformat(timespec='seconds')}Z"
 
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_%s" % ft.value
     await client.delete(measurement, stop=end, start=start_str, tags={"code": code})
     logger.info("remove sec from %s: %s, %s", measurement, code, target_date)

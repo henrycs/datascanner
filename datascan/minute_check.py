@@ -10,6 +10,7 @@ from omicron.dal.influx.influxclient import InfluxClient
 from omicron.dal.influx.serialize import EPOCH, DataframeDeserializer
 from omicron.models.security import Security
 from omicron.models.timeframe import TimeFrame
+from omicron.models import get_influx_client
 
 from datascan.jq_fetcher import get_sec_bars_min
 from datascan.scanner_utils import get_secs_from_bars
@@ -49,7 +50,7 @@ my_bars_dtype = np.dtype(
 async def get_security_minutes_bars_bysecs(
     sec_list, ft: FrameType, start: datetime.datetime, end: datetime.datetime
 ):
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_%s" % ft.value
 
     flux = (
@@ -79,7 +80,7 @@ async def get_security_minutes_bars_bysecs(
 async def get_security_minutes_bars(
     ft: FrameType, start: datetime.datetime, end: datetime.datetime
 ):
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_%s" % ft.value
 
     flux = (

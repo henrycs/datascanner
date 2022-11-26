@@ -10,6 +10,7 @@ from omicron.dal.influx.influxclient import InfluxClient
 from omicron.dal.influx.serialize import EPOCH, DataframeDeserializer
 from omicron.models.security import Security
 from omicron.models.timeframe import TimeFrame
+from omicron.models import get_influx_client
 
 from datascan.jq_fetcher import get_sec_bars_1M
 from datascan.scanner_utils import compare_bars_wM_for_openclose, get_secs_from_bars
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 async def get_security_month_bars(start: datetime.datetime, end: datetime.datetime):
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_1M"
 
     flux = (

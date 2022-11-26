@@ -8,7 +8,7 @@
             "name": "Python: App",
             "type": "python",
             "request": "launch",
-            "program": "/home/henry/source/datascanner/app.py",
+            "program": "/home/app/source/datascanner/app.py",
             "console": "integratedTerminal",
             "justMyCode": false
         }

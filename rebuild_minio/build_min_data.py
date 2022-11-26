@@ -11,6 +11,7 @@ from omicron.dal.cache import cache
 from omicron.dal.influx.flux import Flux
 from omicron.dal.influx.influxclient import InfluxClient
 from omicron.dal.influx.serialize import EPOCH, DataframeDeserializer, NumpyDeserializer
+from omicron.models import get_influx_client
 from omicron.models.security import Security
 from omicron.models.timeframe import TimeFrame
 
@@ -75,7 +76,7 @@ def convert_data_format_for_line(sec_data):
 async def get_security_minutes_bars(
     ft: FrameType, start: datetime.datetime, end: datetime.datetime
 ):
-    client = Security._get_influx_client()
+    client = get_influx_client()
     measurement = "stock_bars_%s" % ft.value
 
     cols = [
