@@ -217,7 +217,7 @@ async def reverse_scanner_handler(scanning_type: int):
         _week_day = None  # force skip
         if _week_day:
             try:
-                _week_day = datetime.date(2022, 11, 25)
+                _week_day = datetime.date(2022, 12, 9)
                 logger.info("data scanning for week: %s", _week_day)
                 await validate_data_bars1w(_week_day)
                 await update_scanned_week_day(_week_day)
@@ -247,11 +247,18 @@ async def reverse_scanner_handler(scanning_type: int):
                 scanning_type,
             )
             return True
+        # days.sort()
 
-        days.sort()
+        days = []
+        dt_start = datetime.date(2022, 11, 28)
+        dt_end = datetime.date(2022, 12, 9)
+        while dt_start <= dt_end:
+            days.append(dt_start)
+            dt_start = TimeFrame.day_shift(dt_start, 1)
+
         for _day in days:
-            _day = TimeFrame.int2date(_day)
-            _day = datetime.date(2022, 11, 25)  # manual scan
+            # _day = TimeFrame.int2date(_day)
+            # _day = datetime.date(2022, 11, 25)  # manual scan
             logger.info("data scanning for: %s", _day)
 
             try:
@@ -260,18 +267,17 @@ async def reverse_scanner_handler(scanning_type: int):
                 logger.error("validate_data_all(%s) exception: %s", _day, str(e))
                 rc = False
 
-            rc = True
             if not rc:
-                await save_days_with_issues(_day)
+                # await save_days_with_issues(_day)
                 logger.error("failed to validate data of %s", _day)
             else:
                 logger.info("data integrity check success: %s", _day)
 
             # save timestamp
-            await update_scanning_date(scanning_type, _day)
+            # await update_scanning_date(scanning_type, _day)
 
-            input("next day...")
-            break
+            # input("next day...")
+            # break
 
         if os.path.exists("/home/henry/zillionare/data_scanner/break.txt"):
             logger.info("break flag detected, exit")

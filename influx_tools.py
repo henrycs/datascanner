@@ -6,10 +6,10 @@ from coretypes import FrameType, bars_dtype
 from omicron.dal.influx.flux import Flux
 from omicron.dal.influx.influxclient import InfluxClient
 from omicron.dal.influx.serialize import EPOCH, DataframeDeserializer
+from omicron.models import get_influx_client
 from omicron.models.security import Security
 from omicron.models.timeframe import TimeFrame
 from omicron.models.timeframe import TimeFrame as tf
-from omicron.models import get_influx_client
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,15 @@ async def remove_security_list():
         await client.delete(measurement, datetime.datetime(year, 1, 1))
         print("data deleted in security_list: ", year)
         year += 1
+
+
+async def drop_bars_board_1d(board: str):
+    client = get_influx_client()
+    measurement = "board_bars_1d"  # day
+    await client.delete(measurement, datetime.datetime(2023, 1, 1))
+    print("all data deleted in bars:1d ", board)
+
+    print("board_bars_1d: all finished.")
 
 
 async def drop_bars_1d():

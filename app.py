@@ -21,7 +21,7 @@ from datascan.validate_data_in_week import reverse_scanner_handler
 from download_bars.day_handler import scanner_handler_day
 from download_bars.week_handler import month_download_handler, week_download_handler
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
-from influx_tools import drop_bars_1M, remove_allsecs_in_bars1d
+from influx_tools import drop_bars_1M, drop_bars_board_1d, remove_allsecs_in_bars1d
 from pricestats.sum_history import sum_price_stats
 from rapidscan.main import get_cache_keyname
 from rebuild_minio.build_min_data import rebuild_minio_for_min
@@ -91,6 +91,8 @@ class Omega(object):
         await AbstractQuotesFetcher.create_instance(self.fetcher_impl, **self.params)
 
         try:
+            # await drop_bars_board_1d("boards")
+
             # await remove_allsecs_in_bars1d(datetime.date(2022, 8, 15))
             # await drop_bars_1w()
             # await drop_bars_1M()
