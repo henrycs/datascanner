@@ -217,7 +217,7 @@ async def reverse_scanner_handler(scanning_type: int):
         _week_day = None  # force skip
         if _week_day:
             try:
-                _week_day = datetime.date(2022, 12, 9)
+                _week_day = datetime.date(2022, 12, 16)
                 logger.info("data scanning for week: %s", _week_day)
                 await validate_data_bars1w(_week_day)
                 await update_scanned_week_day(_week_day)
@@ -250,8 +250,8 @@ async def reverse_scanner_handler(scanning_type: int):
         # days.sort()
 
         days = []
-        dt_start = datetime.date(2022, 11, 28)
-        dt_end = datetime.date(2022, 12, 9)
+        dt_start = datetime.date(2022, 12, 12)
+        dt_end = datetime.date(2022, 12, 16)
         while dt_start <= dt_end:
             days.append(dt_start)
             dt_start = TimeFrame.day_shift(dt_start, 1)
