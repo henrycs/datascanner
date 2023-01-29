@@ -1,1 +1,1 @@
-*/2 * * * * /home/henry/zillionare/omega_scanner_1m/run.sh
+*/2 * * * * /home/app/zillionare/omega_scanner_1m/run.sh

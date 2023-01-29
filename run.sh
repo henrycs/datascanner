@@ -8,5 +8,5 @@ else
 fi
 
 echo "start process again..."
-cd /home/henry/zillionare/omega_scanner_1m
-nohup /home/henry/miniconda3/envs/omega/bin/python app1m.py &
+cd /home/app/zillionare/omega_scanner_1m
+nohup /home/app/miniconda3/envs/omega/bin/python app1m.py &

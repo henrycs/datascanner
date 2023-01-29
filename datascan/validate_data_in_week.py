@@ -214,14 +214,14 @@ async def reverse_scanner_handler(scanning_type: int):
 
         # 周线和月线检查，通过读取cache中的时间记录，判断是否需要执行
         _week_day = await get_next_scanning_week_day(now.date())
-        _week_day = None  # force skip
+        #_week_day = None  # force skip
         if _week_day:
             try:
-                _week_day = datetime.date(2022, 12, 16)
+                _week_day = datetime.date(2023, 1, 20)
                 logger.info("data scanning for week: %s", _week_day)
                 await validate_data_bars1w(_week_day)
-                await update_scanned_week_day(_week_day)
-                break
+                #await update_scanned_week_day(_week_day)
+                #break
             except Exception as e:
                 logger.error("validate_data_all(%s) exception: %s", _week_day, e)
                 rc = False
@@ -232,8 +232,8 @@ async def reverse_scanner_handler(scanning_type: int):
             try:
                 logger.info("data scanning for month: %s", _month_day)
                 await validate_data_bars1M(_month_day)
-                await update_scanned_month_day(_month_day)
-                break
+                #await update_scanned_month_day(_month_day)
+                #break
             except Exception as e:
                 logger.error("validate_data_all(%s) exception: %s", _month_day, e)
                 rc = False
@@ -250,8 +250,8 @@ async def reverse_scanner_handler(scanning_type: int):
         # days.sort()
 
         days = []
-        dt_start = datetime.date(2022, 12, 12)
-        dt_end = datetime.date(2022, 12, 16)
+        dt_start = datetime.date(2023, 1, 16)
+        dt_end = datetime.date(2023, 1, 20)
         while dt_start <= dt_end:
             days.append(dt_start)
             dt_start = TimeFrame.day_shift(dt_start, 1)
@@ -279,7 +279,7 @@ async def reverse_scanner_handler(scanning_type: int):
             # input("next day...")
             # break
 
-        if os.path.exists("/home/henry/zillionare/data_scanner/break.txt"):
+        if os.path.exists("/home/app/zillionare/data_scanner/break.txt"):
             logger.info("break flag detected, exit")
             break
 

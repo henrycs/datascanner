@@ -185,13 +185,13 @@ async def generate_minio_for_min(target_date: datetime.date, ft: FrameType):
 
 
 def test_read_file():
-    # file = "/home/henry/zillionare/rebuild_minio/20050223"  # 20220721
-    file = "/home/henry/zillionare/rebuild_minio/20220711_new"
+    # file = "/home/app/zillionare/rebuild_minio/20050223"  # 20220721
+    file = "/home/app/zillionare/rebuild_minio/20220711_new"
     with open(file, "rb") as f:
         binary1 = pickle.load(f)
         print("size: ", len(binary1))
 
-    file = "/home/henry/zillionare/rebuild_minio/20220711"
+    file = "/home/app/zillionare/rebuild_minio/20220711"
     with open(file, "rb") as f:
         binary2 = pickle.load(f)
         print("size: ", len(binary2))
@@ -211,7 +211,7 @@ def test_read_file():
 
 
 def test_read_file_for_sec():
-    file = "/home/henry/zillionare/20220719"
+    file = "/home/app/zillionare/20220719"
     with open(file, "rb") as f:
         binary1 = pickle.load(f)
         print("size: ", len(binary1))
@@ -233,7 +233,7 @@ async def rebuild_minio_for_min():
     # FrameType.MIN30,
 
     ft = FrameType.MIN60
-    file = "/home/henry/zillionare/rebuild_minio/days_60m.txt"
+    file = "/home/app/zillionare/rebuild_minio/days_60m.txt"
     with open(file, "r") as f:
         lines = f.readlines()
         for line in lines:

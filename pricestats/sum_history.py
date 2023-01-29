@@ -339,8 +339,8 @@ async def sum_highlimits_for_date(target_date: datetime.date):
 async def sum_price_stats():
     now = datetime.datetime.now()
     target_date = TimeFrame.day_shift(now, -30)
-    # file = "/home/henry/zillionare/pricestats.txt"
-    file = "/home/henry/zillionare/highlimit_sum.txt"
+    # file = "/home/app/zillionare/pricestats.txt"
+    file = "/home/app/zillionare/highlimit_sum.txt"
     with open(file, "w") as f:
         while target_date < now.date():
             # param = await sum_pricestat_for_date(target_date)

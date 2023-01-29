@@ -98,7 +98,7 @@ async def scanner_handler_minutes(ft: FrameType, reload_days: bool):
         await cache.sys.set(key, target_day.strftime("%Y-%m-%d"))
         input("next day...")
 
-        if os.path.exists("/home/henry/zillionare/omega_scanner_min/break1m.txt"):
+        if os.path.exists("/home/app/zillionare/omega_scanner_min/break1m.txt"):
             logger.info("break flag detected, exit, last day: %s", target_day)
             break
 
