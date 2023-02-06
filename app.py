@@ -22,6 +22,7 @@ from download_bars.day_handler import scanner_handler_day
 from download_bars.week_handler import month_download_handler, week_download_handler
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
 from influx_tools import drop_bars_1M, drop_bars_board_1d, remove_allsecs_in_bars1d
+from pack_data.pack_bars import pack_data_from_db
 from pricestats.sum_history import sum_price_stats
 from rapidscan.main import get_cache_keyname
 from rebuild_minio.build_min_data import rebuild_minio_for_min
@@ -86,17 +87,20 @@ class Omega(object):
             time.sleep(5)
             os._exit(1)
 
-        logger.info("<<< init %s process done", self.__class__.__name__)
-
-        await AbstractQuotesFetcher.create_instance(self.fetcher_impl, **self.params)
+        logger.info("<<< init %s process done", self.__class__.__name__)        
 
         try:
             # await drop_bars_board_1d("boards")
-
+            # await sum_price_stats()
             # await remove_allsecs_in_bars1d(datetime.date(2022, 8, 15))
             # await drop_bars_1w()
             # await drop_bars_1M()
             # await drop_bars_via_scope(target_year, FrameType.WEEK)
+
+            # pack history data into pickle file
+            await pack_data_from_db()
+
+            # await AbstractQuotesFetcher.create_instance(self.fetcher_impl, **self.params)
 
             # await week_download_handler()
             # await month_download_handler()
@@ -104,8 +108,7 @@ class Omega(object):
             # await scanner_handler_day()
             # await scanner_handler_minutes(ft, False)
 
-            await reverse_scanner_handler(scanning_type=0)
-            # await sum_price_stats()
+            # await reverse_scanner_handler(scanning_type=0)
 
             # await redownload_bars1w_for_target_day()
             # await redownload_bars1d_for_target_day()
