@@ -21,7 +21,12 @@ from datascan.validate_data_in_week import reverse_scanner_handler
 from download_bars.day_handler import scanner_handler_day
 from download_bars.week_handler import month_download_handler, week_download_handler
 from fetchers.abstract_quotes_fetcher import AbstractQuotesFetcher
-from influx_tools import drop_bars_1M, drop_bars_board_1d, remove_allsecs_in_bars1d
+from influx_tools import (
+    drop_bars_1M,
+    drop_bars_board_1d,
+    remove_allsecs_in_bars1d,
+    remove_sec_in_bars1d,
+)
 from pack_data.pack_bars import pack_data_from_db
 from pricestats.sum_history import sum_price_stats
 from rapidscan.main import get_cache_keyname
@@ -87,7 +92,7 @@ class Omega(object):
             time.sleep(5)
             os._exit(1)
 
-        logger.info("<<< init %s process done", self.__class__.__name__)        
+        logger.info("<<< init %s process done", self.__class__.__name__)
 
         try:
             # await drop_bars_board_1d("boards")
@@ -96,6 +101,7 @@ class Omega(object):
             # await drop_bars_1w()
             # await drop_bars_1M()
             # await drop_bars_via_scope(target_year, FrameType.WEEK)
+            # await remove_sec_in_bars1d("000985.XSHG", datetime.date(2022,1,1), datetime.date(2023,3,1))
 
             # pack history data into pickle file
             await pack_data_from_db()

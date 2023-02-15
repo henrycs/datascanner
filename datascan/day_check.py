@@ -4,8 +4,8 @@ import logging
 from omicron.dal.cache import cache
 from omicron.dal.influx.flux import Flux
 from omicron.dal.influx.serialize import DataframeDeserializer
-from omicron.models.security import Security
 from omicron.models import get_influx_client
+from omicron.models.security import Security
 
 from datascan.index_secs import get_index_sec_whitelist
 from datascan.jq_fetcher import get_sec_bars_1d, get_sec_bars_pricelimits

@@ -12,14 +12,12 @@ from omicron.models.stock import Stock
 from omicron.models.timeframe import TimeFrame
 from omicron.models.timeframe import TimeFrame as tf
 
-from datascan.jq_fetcher import get_sec_bars_1d, get_sec_bars_pricelimits
 from dfs import Storage
 from dfs_tools import get_trade_limit_filename
 from influx_data.security_bars_1d import (
     get_security_day_bars,
     get_security_price_limits,
 )
-from influx_tools import remove_sec_in_bars1d
 
 logger = logging.getLogger(__name__)
 

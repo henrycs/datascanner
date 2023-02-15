@@ -8,9 +8,9 @@ from omicron.dal.cache import cache
 from omicron.dal.influx.flux import Flux
 from omicron.dal.influx.influxclient import InfluxClient
 from omicron.dal.influx.serialize import EPOCH, DataframeDeserializer
+from omicron.models import get_influx_client
 from omicron.models.security import Security
 from omicron.models.timeframe import TimeFrame
-from omicron.models import get_influx_client
 
 from datascan.jq_fetcher import get_sec_bars_1w
 from datascan.scanner_utils import compare_bars_wM_for_openclose, get_secs_from_bars

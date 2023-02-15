@@ -95,10 +95,12 @@ async def drop_bars_via_scope(target_year, ft: FrameType):
     print("drop ", measurement, " all finished.")
 
 
-async def remove_sec_in_bars1d(code: str, target_date: datetime.date):
+async def remove_sec_in_bars1d(
+    code: str, dt_start: datetime.date, dt_end: datetime.date
+):
     # 删除日线内所有数据
-    start = datetime.datetime.combine(target_date, datetime.time(0, 0, 0))
-    end = datetime.datetime.combine(target_date, datetime.time(23, 59, 59))
+    start = datetime.datetime.combine(dt_start, datetime.time(0, 0, 0))
+    end = datetime.datetime.combine(dt_end, datetime.time(23, 59, 59))
     start_str = f"{start.isoformat(timespec='seconds')}Z"
 
     client = get_influx_client()
